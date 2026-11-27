@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.1.1'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.1.2'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -6739,6 +6739,7 @@ async function playDomino(seat, spriteSlotIndex, isLead = false, aiRec = null, p
   const playerNum = MULTIPLAYER_MODE ? mpVisualPlayer(seat) : (PASS_AND_PLAY_MODE ? ppVisualPlayer(seat) : seatToPlayer(seat));
   const targetPose = getPlayedPosition(playerNum);
   if(!targetPose) return;
+  sprite._playedPlayerNum = playerNum; // v14.1.2: lets refreshLayout re-place it after a rotation
 
   // Start both animations at the same time
   // Hand recenter starts immediately (with its own delay offset)
@@ -11465,19 +11466,27 @@ document.getElementById('btnTrumpConfirm').ontouchend = function(e) {
 function refreshLayout(){
   console.log("Refreshing layout...");
 
-  // Reposition all hand sprites
-  for(let p = 0; p < session.game.player_count; p++){
-    const playerNum = seatToPlayer(p);
-    for(let h = 0; h < session.game.hand_size; h++){
-      const data = sprites[p] && sprites[p][h];
-      if(data && data.sprite){
-        const pos = getHandPosition(playerNum, h);
-        if(pos){
-          data.sprite.setPose(pos);
-        }
+  // v14.1.2: re-center each hand around the dominoes still in it. The old code put tiles
+  // back in their original deal slots, which left gaps after tiles had been played.
+  // recenterHand also uses the right seat mapping for multiplayer and pass & play.
+  if(typeof session !== 'undefined' && session && session.game && typeof sprites !== 'undefined'){
+    for(let p = 0; p < session.game.player_count; p++){
+      try { recenterHand(p); } catch(e) {}
+    }
+  }
+
+  // v14.1.2: move tiles in the current trick and in trick history to their spots for the new screen size
+  var _sl = document.getElementById('spriteLayer');
+  if(_sl){
+    for(var _i = 0; _i < _sl.children.length; _i++){
+      var _c = _sl.children[_i];
+      if(!_c._inTrickHistory && _c._playedPlayerNum !== undefined && _c.setPose){
+        var _pp = getPlayedPosition(_c._playedPlayerNum);
+        if(_pp) _c.setPose(_pp);
       }
     }
   }
+  if(typeof repositionTrickHistorySprites === 'function') repositionTrickHistorySprites();
 
   // Reposition placeholders
   createPlaceholders();
@@ -11496,7 +11505,11 @@ function refreshLayout(){
   // Note: Trick history dominoes are in fixed positions and handled by their own layout
 }
 
-window.addEventListener('resize', refreshLayout);
+// v14.1.2: wait for resizing to settle, then lay out once (rotation fires many resize events)
+window.addEventListener('resize', function(){
+  clearTimeout(window._refreshLayoutTimer);
+  window._refreshLayoutTimer = setTimeout(refreshLayout, 250);
+});
 
 // Orientation change handler - refresh when returning to portrait
 let lastOrientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';

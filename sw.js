@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.1.1 — update check on start and from the menu; close buttons on their windows
+// Version: v14.1.2 — rotation keeps hands centered; popups scroll with pinned buttons
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.1.1';
+const CACHE_NAME = 'tx-dom-v14.1.2';
 const urlsToCache = [
   './index.html',
   './sw.js',

@@ -82,13 +82,9 @@
       panel.style.maxHeight = cfg.maxH + '%';
       panel.style.minWidth = 'auto';
       panel.style.boxSizing = 'border-box';
-      // Aspect ratio lock
-      if(cfg.ar !== null && cfg.ar !== undefined){
-        panel.style.aspectRatio = (cfg.ar / 100).toFixed(2) + ' / 1';
-      } else {
-        panel.style.aspectRatio = 'auto';
-      }
-      // Overflow managed by fitPopupContent — default to hidden
+      // v14.1.2: no locked shape. The window is as tall as its content, up to maxH;
+      // past that the middle scrolls and the buttons stay pinned at the bottom (see CSS).
+      panel.style.aspectRatio = 'auto';
       panel.style.overflow = 'hidden';
     }
 
@@ -116,54 +112,17 @@
   // ─── Auto-scale content to fit popup without scrolling ───
   var MIN_SCALE = 0.6;
 
+  // v14.1.2: popups no longer shrink their content (that cut off buttons on small screens).
+  // The scrolling body + pinned footer in the CSS handles content that is too tall.
   function fitPopupContent(popupId){
     var backdrop = document.getElementById(popupId);
     if(!backdrop) return;
     var panel = backdrop.querySelector('.modalPanel') || backdrop.querySelector('.modal') || backdrop.querySelector(':scope > div');
     if(!panel) return;
-
-    // Find the scrollable content area — first child div inside the panel
-    var content = panel.querySelector('.modalBody') || panel.children[0];
-    if(!content || content === panel) content = panel;
-
-    // Reset previous scaling to measure natural size
-    content.style.transform = '';
-    content.style.transformOrigin = '';
-    content.style.height = '';
-
-    // Double rAF to ensure layout has fully settled
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){
-        var panelH = panel.clientHeight;
-        var naturalH = panel.scrollHeight;
-
-        if(naturalH <= panelH || panelH <= 0){
-          // Content fits — no scaling needed
-          panel.style.overflow = 'hidden';
-          return;
-        }
-
-        var scale = panelH / naturalH;
-        if(scale >= 1) return;
-
-        if(scale >= MIN_SCALE){
-          // Scale down to fit
-          content.style.transform = 'scale(' + scale.toFixed(3) + ')';
-          content.style.transformOrigin = 'top center';
-          content.style.height = (naturalH) + 'px';
-          panel.style.overflow = 'hidden';
-        } else {
-          // Below floor — don't scale, just allow scrolling at full size
-          content.style.transform = '';
-          content.style.transformOrigin = '';
-          content.style.height = '';
-          panel.style.overflow = 'auto';
-        }
-      });
-    });
+    var content = panel.querySelector('.modalBody');
+    if(content){ content.style.transform = ''; content.style.transformOrigin = ''; content.style.height = ''; }
   }
 
-  // Refit all currently-visible popups (for resize/orientation)
   function refitAllVisiblePopups(){
     for(var id in POPUP_CONFIG){
       var el = document.getElementById(id);

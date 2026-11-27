@@ -1754,3 +1754,16 @@
 }
 /* v14.1.1: menu windows open on top of the bid/trump boxes so their close (x) can be tapped */
 #mcBackdrop, #notesBackdrop, #gameLogBackdrop, #advLogBackdrop{ z-index:2000; }
+
+/* v14.1.2: popups fit the screen. Header and buttons stay put; only the middle scrolls,
+   so the Bid / OK buttons are always visible and tappable. */
+.modalPanel{
+  display:flex; flex-direction:column;
+  max-height:calc(100% - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+.modalPanel > .modalHeader, .modalPanel > .modalFooter{ flex:0 0 auto; }
+.modalPanel > .modalBody{
+  flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  touch-action:pan-y;
+}
+#bidBackdrop .modalPanel, #trumpBackdrop .modalPanel{ overflow:hidden !important; }
