@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.4.7 — Status bar colour switches as soon as the game starts
+// Version: v14.4.8 — Real manifest; home screen full screen like Bible Bridge
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.4.7';
+const CACHE_NAME = 'tx-dom-v14.4.8';
 const urlsToCache = [
   './index.html',
   './sw.js',

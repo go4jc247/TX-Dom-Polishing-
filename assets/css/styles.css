@@ -2081,3 +2081,9 @@ html:not(.onHome), html:not(.onHome) body{ background:var(--topC) !important; }
   html.onHome #statusTint{ background:#0a3e8a; z-index:1150; }
 }
 html.onHome, html.onHome body{ background:#0a3e8a !important; }
+
+/* v14.4.8: home screen like Bible Bridge: no status-bar strip (it draws under the clock; a little
+   blur there is fine) and sized to the real visible height (100dvh) so it reaches the bottom */
+html.onHome #statusTint{ display:none !important; }
+#startScreenBackdrop{ bottom:auto !important; height:100vh !important; height:100dvh !important; }
+html.onHome, html.onHome body{ background:#01001e !important; }

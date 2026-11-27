@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.4.7'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.4.8'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -12282,6 +12282,8 @@ setTimeout(_updateLandscapeClock, 500);
     var on = !!sb && sb.style.display !== 'none' && getComputedStyle(sb).display !== 'none';
     var was = document.documentElement.classList.contains('onHome');
     document.documentElement.classList.toggle('onHome', on);
+    window._inGame = !on;
+    if(window._applyViewport) window._applyViewport();
     var tc = document.querySelector('meta[name="theme-color"]');
     if(tc) tc.setAttribute('content', on ? '#01001e' : '#1a5c2a');
     if(was !== on) _refreshStatusTint();

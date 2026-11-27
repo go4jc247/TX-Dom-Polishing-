@@ -9,17 +9,22 @@
 // than the screen and left a bar under the hand. (Upright = the same as v13, which filled the screen.)
 (function(){
   var base = 'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no';
+  // v14.4.8: also on the home screen (it draws under the clock and to the bottom, like Bible Bridge).
+  // window._inGame is set by the game when a game starts and cleared on return to the home screen.
   function apply(){
     var m = document.getElementById('metaViewport'); if(!m) return;
-    var want = base + (window.innerWidth > window.innerHeight ? ',viewport-fit=cover' : '');
+    var cover = window.innerWidth > window.innerHeight || !window._inGame;
+    var want = base + (cover ? ',viewport-fit=cover' : '');
     if(m.getAttribute('content') !== want) m.setAttribute('content', want);
   }
+  window._applyViewport = apply;
   apply();
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', function(){ setTimeout(apply, 50); });
 })();
 </script>
 <title>Texas Dominoes</title>
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="./assets/css/styles.css">
 
 <!-- V12.4: Web App Manifest & Home Screen Icon -->
@@ -32,18 +37,8 @@
 <link rel="apple-touch-icon" sizes="512x512" href="./assets/images/icon-512.png">
 </head>
 <body>
-<!-- V12.4: Inline Web App Manifest -->
-<script>
-(function(){
-  var base = window.location.href.replace(/\/[^/]*$/, '/');
-  var m = {"name": "Texas Dominoes", "short_name": "Texas Dominoes", "description": "Texas Dominoes - TN51 / T42 / Moon", "start_url": ".", "display": "standalone", "orientation": "portrait", "background_color": "#1a5c2a", "theme_color": "#1a5c2a", "icons": [{"src": base + "assets/images/manifest-icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": base + "assets/images/manifest-icon-512.png", "sizes": "512x512", "type": "image/png"}]};
-  var blob = new Blob([JSON.stringify(m)], {type:'application/json'});
-  var link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = URL.createObjectURL(blob);
-  document.head.appendChild(link);
-})();
-</script>
+<!-- v14.4.8: the web app manifest is a real file now (manifest.webmanifest, linked in <head>);
+     iOS ignores manifests built in a script, which is why the home-screen app was not full screen -->
 <style>
 /* v14.1.0: "Update available" prompt (v14.1.1: also used for Check for Updates) */
 #updatePrompt{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);
@@ -372,7 +367,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div style="text-align:center;">
       <div style="font-size:24px;font-weight:800;color:#fff;margin-bottom:4px;">TN51 / TX42 Dominoes</div>
-      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.4.7</div>
+      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.4.8</div>
       <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
         <div>Built: February 2026</div>
         <div>Game modes: Tennessee 51, Texas 42</div>
