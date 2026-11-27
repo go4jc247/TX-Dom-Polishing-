@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.2.0 — calculated TN51 and T42 layouts, full screen, slim top bar with Menu button
+// Version: v14.2.1 — lay-down shown with the dominoes on the table
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.2.0';
+const CACHE_NAME = 'tx-dom-v14.2.1';
 const urlsToCache = [
   './index.html',
   './sw.js',

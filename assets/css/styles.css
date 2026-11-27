@@ -1806,3 +1806,11 @@ body.landscapeLayout #bidBackdrop .modalPanel, body.landscapeLayout #trumpBackdr
 
 /* v14.2.0: bid and trump boxes open just under the top bar, never over the scores or Menu */
 #bidBackdrop, #trumpBackdrop{ padding-top:calc(50px + env(safe-area-inset-top)) !important; align-items:flex-start !important; }
+
+/* v14.2.1: lay-down uses the dominoes on the table. The message sits under the top bar
+   and leaves the table visible; the revealed tiles glow. */
+#layDownBackdrop{ background:transparent !important; align-items:flex-start !important;
+  padding-top:calc(54px + env(safe-area-inset-top)); pointer-events:none; }
+#layDownPanel{ pointer-events:auto; padding:12px 16px !important; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
+#layDownTiles{ display:none; }
+.dominoSprite.layDownGlow{ filter: drop-shadow(0 0 6px rgba(255,213,74,0.95)) drop-shadow(0 0 2px rgba(255,213,74,0.95)); }

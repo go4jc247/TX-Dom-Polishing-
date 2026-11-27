@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.2.0'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.2.1'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -960,6 +960,31 @@ function showLayDownDialog() {
   showLayDownReveal(layDownState, false);
 }
 
+// v14.2.1: reveal (or put back) a lay-down hand using the sprites already on the table
+function revealLayDownOnTable(seat, reveal){
+  if(typeof sprites === 'undefined' || !sprites[seat]) return;
+  var local = (seat === getLocalSeat());
+  var LIFT = 18;
+  sprites[seat].forEach(function(d){
+    if(!d || !d.sprite) return;
+    var sp = d.sprite, p = sp.getPose();
+    if(reveal){
+      sp.classList.add('layDownGlow');
+      bringToFront(sp);
+      if(local){
+        if(!sp._ldLift){ sp._ldLift = LIFT; animateSprite(sp, Object.assign({}, p, { y: p.y - LIFT }), 250); }
+      } else if(p.ry !== 180){
+        sp._ldFlipped = true;
+        animateSprite(sp, Object.assign({}, p, { ry: 180 }), 450);
+      }
+    } else {
+      sp.classList.remove('layDownGlow');
+      if(sp._ldLift){ animateSprite(sp, Object.assign({}, p, { y: p.y + sp._ldLift }), 250); sp._ldLift = 0; }
+      if(sp._ldFlipped){ animateSprite(sp, Object.assign({}, p, { ry: 0 }), 450); sp._ldFlipped = false; }
+    }
+  });
+}
+
 function showLayDownReveal(result, isAI) {
   const panel = document.getElementById('layDownPanel');
   const title = document.getElementById('layDownTitle');
@@ -973,18 +998,10 @@ function showLayDownReveal(result, isAI) {
   title.textContent = isAI ? `P${playerNum} Lays Down Hand!` : 'Lay Down Hand';
   desc.textContent = result.reason;
 
-  // Show tiles as domino canvas images
+  // v14.2.1: show the hand with the real dominoes on the table (yours lift and glow,
+  // another player's flip face-up where they sit) instead of copies in a popup
   tilesDiv.innerHTML = '';
-  for (const t of result.hand) {
-    const div = document.createElement('div');
-    div.className = 'layDownTile';
-    if (session.game._is_trump_tile(t)) div.className += ' trump';
-    const cvs = renderDominoCanvas(t, 36, 72);
-    cvs.style.cssText = 'display:block;border-radius:4px;';
-    div.textContent = '';
-    div.appendChild(cvs);
-    tilesDiv.appendChild(div);
-  }
+  revealLayDownOnTable(result.seat, true);
 
   // In single player: human opponents can accept or contest
   // AI lays down → show accept/contest to human
@@ -1083,6 +1100,7 @@ function acceptLayDown() {
 function contestLayDown() {
   document.getElementById('layDownBackdrop').style.display = 'none';
   document.getElementById('layDownBtnGroup').style.display = 'none';
+  if (layDownState) revealLayDownOnTable(layDownState.seat, false); // v14.2.1: put the tiles back
 
   // Contest = play it out normally
   // Log the contest

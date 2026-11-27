@@ -81,7 +81,8 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v13.5.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js)
+- **Current version:** v14.2.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.json + sw.js)
 - **Dev branch:** main
@@ -150,11 +151,11 @@ These are not suggestions. They are hard rules for this project.
 <script src="./assets/js/popup-config.js" defer></script> ← popup position config IIFE
 ```
 
-### Lazy-loaded (on demand via `_lazyLoad()`):
-- `dev-tools.js` — dev mode toggle, custom hands, game logging, device presets
-- `monte-carlo.js` — Monte Carlo simulation modal
+### Loaded at startup since v14.0.2 (they were "lazy" but nothing ever loaded them):
+- `replay.js`, `dev-tools.js`, `monte-carlo.js` (defer tags after popup-config.js)
+
+### Still lazy-loaded (on demand via `_lazyLoad()`):
 - `observer.js` — observer/spectator mode
-- `replay.js` — save/load/replay system
 
 ### File sizes (as of v13.5.1):
 | File | Lines | Description |
@@ -207,6 +208,11 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
+   STATUS (v14.2.1): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE. Remaining: Moon still uses
+   its hand-tuned MOON_SETTINGS layout (letterboxed); landscape works but is tight on phones.
+   Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
+   applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
+   layout sliders are overridden by the engines.
    - Stage 1: quick fixes. Rotation leaves gaps (refreshLayout uses original deal slots, should
      recenter); popups never taller than the screen, scrolling body, buttons pinned at bottom
    - Stage 2: new layout engine, TN51 FIRST (owner's call: hex table, 60-degree seats are the
