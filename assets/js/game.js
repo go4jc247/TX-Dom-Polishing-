@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.7'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.8'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2034,14 +2034,39 @@ function _layoutTopY(rect, ids){
 
 // v14.3.0: iPhone notch / home-bar insets, read once from CSS env()
 var _safeInsets = null;
+// v14.3.8: which side the iPhone camera (notch / Dynamic Island) is on when held sideways.
+// iOS reports the same safe strip on BOTH sides in landscape, but only the camera side needs it.
+function _cameraSide(){
+  if(window._fakeCamSide !== undefined) return window._fakeCamSide;          // test hook
+  if(window.innerWidth <= window.innerHeight) return null;
+  var a = (typeof window.orientation === 'number') ? window.orientation
+        : (screen.orientation && typeof screen.orientation.angle === 'number' ? screen.orientation.angle : null);
+  if(a === 90) return 'left';                   // turned counter-clockwise: camera on the left
+  if(a === -90 || a === 270) return 'right';    // turned clockwise: camera on the right
+  return null;
+}
 function _getSafeInsets(){
-  if(_safeInsets && _safeInsets._w === window.innerWidth) return _safeInsets;
-  var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
-  document.body.appendChild(d);
-  var cs = getComputedStyle(d);
-  _safeInsets = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0, _w: window.innerWidth };
-  d.remove();
+  var side = _cameraSide();
+  if(_safeInsets && _safeInsets._w === window.innerWidth && _safeInsets._h === window.innerHeight && _safeInsets._side === side) return _safeInsets;
+  var raw;
+  if(window._fakeInsets) raw = Object.assign({}, window._fakeInsets);                 // test hook
+  else {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
+    document.body.appendChild(d);
+    var cs = getComputedStyle(d);
+    raw = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
+    d.remove();
+  }
+  var cam = Math.max(raw.l, raw.r);
+  if(side === 'left'){ raw.l = cam; raw.r = 0; }
+  else if(side === 'right'){ raw.r = cam; raw.l = 0; }
+  _safeInsets = { t: raw.t, r: raw.r, b: raw.b, l: raw.l, cam: (side && cam > 0) ? side : null, _w: window.innerWidth, _h: window.innerHeight, _side: side };
+  var bs = document.body.style;
+  bs.setProperty('--insL', raw.l + 'px'); bs.setProperty('--insR', raw.r + 'px');
+  bs.setProperty('--insT', raw.t + 'px'); bs.setProperty('--insB', raw.b + 'px');
+  document.body.classList.toggle('camLeft', _safeInsets.cam === 'left');
+  document.body.classList.toggle('camRight', _safeInsets.cam === 'right');
   return _safeInsets;
 }
 
@@ -2073,7 +2098,11 @@ function _landscapePanel(W, H, m, nPlayers, S, nTricks){
   S.thTranspose = true; S.thScale = sth;
   S.thBaseX = gridRight / W;                 S.thColSpacing = -pitchX / W;
   S.thBaseY = (thTop + pad + tileH / 2) / H; S.thRowSpacing = pitchY / H;
-  S.thTeamGap = TEAMGAP * tileH / H;
+  // v14.3.8: Team 1 snaps to the top, Team 2's first trick snaps to the bottom; the
+  // leftover height is the gap in the middle (at least TEAMGAP of a row).
+  var bottomRowY = H - Math.max(ins.b, m) - pad - tileH / 2;
+  var lastRowY = thTop + pad + tileH / 2 + (nTricks - 1) * pitchY;
+  S.thTeamGap = Math.max(0, bottomRowY - lastRowY) / H;
   var th = getSection('Trick_History');
   if(th) th.dominoes.forEach(function(d){ d.rotZ = 0; });
   var bg = document.getElementById('trickHistoryBg');
@@ -2304,7 +2333,7 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   var sPlay = _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls2, Ry, depth, sOpp, Ry - 56 * s1, 30, 54);
 
   // Status line lives in the bottom-left corner; keep it clear of P2's row and your hand
-  var statusMax = Math.max(120, Math.min(cx - B - Ls2 / 4, cx - handWH / 2) - ins.l - 12);
+  var statusMax = Math.max(120, Math.min(cx - B - Ls2 / 4, cx - handWH / 2) - ins.l - 20);
   document.body.style.setProperty('--statusMaxW', Math.round(statusMax) + 'px');
 
   _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: true, B: B, Ls: Ls2, Ry: Ry, sOpp: sOpp, s1: sHand, sPlay: sPlay, cx: cx, cy: cy };
@@ -12033,6 +12062,33 @@ window.addEventListener('resize', function(){
     if(_usesAutoLayout()){ if(GAME_MODE === 'T42') applyT42Settings(); else applyTn51Settings(); } else refreshLayout();
   }, 250);
 });
+
+// v14.3.8: sideways the phone hides its own clock, so the game shows one.
+// Camera on the left: bottom of the camera strip. Camera on the right: top of the camera strip
+// (right of the side panel). No camera strip: just right of the Menu button.
+function _updateLandscapeClock(){
+  var el = document.getElementById('landscapeClock');
+  if(!el) return;
+  var d = new Date(), h = d.getHours() % 12 || 12, mm = ('0' + d.getMinutes()).slice(-2);
+  el.textContent = h + ':' + mm;
+  if(!document.body.classList.contains('landscapeLayout')) return;
+  var ins = _getSafeInsets();
+  el.style.left = el.style.right = el.style.top = el.style.bottom = el.style.width = '';
+  if(ins.cam === 'left'){ el.style.left = '0px'; el.style.width = ins.l + 'px'; el.style.bottom = (Math.max(ins.b, 4) + 6) + 'px'; }
+  else if(ins.cam === 'right'){ el.style.right = '0px'; el.style.width = ins.r + 'px'; el.style.top = (ins.t + 8) + 'px'; }
+  else {
+    var b = document.getElementById('settingsBtn'), r = b ? b.getBoundingClientRect() : null;
+    if(r && r.width){ el.style.left = Math.round(r.right + 10) + 'px'; el.style.top = Math.round(r.top + r.height / 2 - 9) + 'px'; }
+  }
+}
+setInterval(_updateLandscapeClock, 15000);
+window.addEventListener('resize', function(){ setTimeout(_updateLandscapeClock, 400); });
+setTimeout(_updateLandscapeClock, 500);
+
+// v14.3.8: a 180-degree flip keeps the same size but moves the camera to the other side
+function _onFlip(){ _safeInsets = null; window.dispatchEvent(new Event('resize')); }
+window.addEventListener('orientationchange', function(){ setTimeout(_onFlip, 300); });
+if(screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', function(){ setTimeout(_onFlip, 300); });
 
 // Orientation change handler - refresh when returning to portrait
 let lastOrientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';

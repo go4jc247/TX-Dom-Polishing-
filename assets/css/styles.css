@@ -1925,3 +1925,32 @@ body.landscapeLayout #topbar .scoreBar{ position:absolute; left:7px; right:7px; 
 body.landscapeLayout #topbar .scorePill{ padding-left:5px !important; padding-right:5px !important; column-gap:3px; }
 body.landscapeLayout #topbar .scoreLabel{ font-size:9px; letter-spacing:0; overflow:visible; flex:0 0 auto; }
 body.landscapeLayout #topbar .scoreValue{ font-size:15px; }
+
+/* ============================================================
+   v14.3.8: only the camera side of a sideways iPhone keeps its safe strip.
+   --insL / --insR come from _getSafeInsets() (the other side is set to 0).
+   Camera on the left: Menu (compact) and the trump marker live in the strip above the camera,
+   the clock below it. Camera on the right: the clock sits in the strip right of the panel.
+   ============================================================ */
+body.landscapeLayout .settingsBtn{ left:calc(6px + var(--insL, 0px)) !important; }
+body.landscapeLayout .settingsMenu{ left:calc(6px + var(--insL, 0px)) !important; }
+body.landscapeLayout .trumpDisplaySquare{ --trump-display-left: calc(8px + var(--insL, 0px)); }
+body.landscapeLayout #topbar{ padding-right:calc(4px + var(--insR, 0px)) !important; }
+body.landscapeLayout #statusBar{ left:calc(8px + var(--insL, 0px)) !important; }
+
+body.landscapeLayout.camLeft .settingsBtn{
+  left:4px !important; width:calc(var(--insL) - 8px) !important; min-width:36px; min-height:40px;
+  top:calc(6px + var(--insT, 0px)) !important; padding:3px 0 !important;
+  flex-direction:column !important; justify-content:center; gap:1px !important; font-size:9px !important;
+}
+body.landscapeLayout.camLeft .settingsBtn .menuIcon{ font-size:16px; line-height:1; }
+body.landscapeLayout.camLeft .settingsMenu{ left:calc(var(--insL) + 4px) !important; top:calc(6px + var(--insT, 0px)) !important; }
+body.landscapeLayout.camLeft .trumpDisplaySquare{
+  --trump-display-left: calc((var(--insL) - 34px) / 2); --trump-display-top: calc(52px + var(--insT, 0px));
+}
+
+#landscapeClock{ display:none; }
+body.landscapeLayout #landscapeClock{
+  display:block; position:fixed; z-index:60; pointer-events:none; text-align:center;
+  font:700 13px -apple-system, system-ui, sans-serif; color:rgba(255,255,255,0.85); letter-spacing:0.2px;
+}

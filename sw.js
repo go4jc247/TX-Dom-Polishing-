@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.7 — Landscape: bigger hand to the bottom edge, one-line scores and marks, gaps in trick history
+// Version: v14.3.8 — Landscape: only the camera side keeps its strip, clock, history snaps top and bottom
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.7';
+const CACHE_NAME = 'tx-dom-v14.3.8';
 const urlsToCache = [
   './index.html',
   './sw.js',
