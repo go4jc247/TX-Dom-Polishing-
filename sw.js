@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.0.1 — Stage 1 cleanup: Claude Chat removed, full-screen background under the status bar
+// Version: v14.1.0 — asks the player before updating (no automatic skipWaiting)
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.0.2';
+const CACHE_NAME = 'tx-dom-v14.1.0';
 const urlsToCache = [
   './index.html',
   './sw.js',
@@ -50,7 +50,11 @@ const urlsToCache = [
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache)));
-  self.skipWaiting();
+  // v14.1.0: no automatic skipWaiting. A new version waits until the player taps Update.
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
