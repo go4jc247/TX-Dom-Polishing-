@@ -197,7 +197,8 @@ function _lazyLoad(src, cb) {
 1. Nello: rule options for how Nello is played; fix dominoes that stay invisible after a re-shuffle
 2. Moon: check it works as 1 vs 1 vs 1
 3. TN51: check it works as 3 vs 3 (2 teams of 3)
-4. Monte Carlo upgrade: allow running it right after the deal, at any stage.
+4. Monte Carlo upgrade, renamed to "Hand Analyzer" (agreed name; optional small subtitle
+   "runs thousands of simulated hands"): allow running it right after the deal, at any stage.
    - Before bidding/trump: let the player propose a bid and a trump, then simulate
    - If the proposed bid is below the current minimum/high bid, warn "not a winning bid"
      but still let the simulation run
