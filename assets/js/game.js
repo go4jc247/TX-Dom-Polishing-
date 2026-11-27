@@ -2218,12 +2218,37 @@ function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner,
     S['ind' + q2 + 'x'] = (cx + LP.tags[q2][0]) / W;     S['ind' + q2 + 'y'] = (cy + LP.tags[q2][1]) / H;
   }
   S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = cy / H;
+  // v14.4.0: the trump marker (34px square + TRUMP label) sits next to the play: the first free
+  // spot among the cluster's corners, then beside your tag
+  var TW = 34, TH = 34 + 13, used = [{ x: 0, y: 0, w: LEADW + GAPT, h: LEADH + GAPT }];
+  for(var u = 1; u <= 6; u++){
+    used.push({ x: LP.tiles[u][0], y: LP.tiles[u][1], w: 2 * LP.hw + GAPT, h: 2 * LP.hh + GAPT });
+    used.push({ x: LP.tags[u][0], y: LP.tags[u][1], w: TAGW + GAPT, h: TAGH + GAPT });
+  }
+  var cxT = LP.tiles[6][0] + LP.hw + GAPT + TW / 2, cyT = Math.max(Math.abs(LP.tiles[1][1]), LEADH / 2 + GAPT + TH / 2);
+  var cand = [[-cxT, cyT], [cxT, cyT], [-cxT, -cyT], [cxT, -cyT],
+              [-(TAGW / 2 + GAPT + TW / 2), LP.tags[1][1] + 6], [TAGW / 2 + GAPT + TW / 2, LP.tags[1][1] + 6]];
+  var tp = cand[cand.length - 2];
+  for(var ci = 0; ci < cand.length; ci++){
+    var tb = { x: cand[ci][0], y: cand[ci][1], w: TW + GAPT, h: TH + GAPT };
+    if(!used.some(function(b){ return hit(tb, b); })){ tp = cand[ci]; break; }
+  }
+  _trumpSpot = { left: cx + tp[0] - TW / 2, top: cy + tp[1] - TH / 2 };
   PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
   PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
   PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sPlay / 0.393);
   return sPlay;
 }
 
+// v14.4.0: where the engine wants the trump marker (null = old CSS spot); placed in px
+var _trumpSpot = null;
+function _applyTrumpSpot(){
+  var el = document.getElementById('trumpDisplay'); if(!el) return;
+  if(!_trumpSpot || !document.body.classList.contains('fluidLayout')){ el.style.removeProperty('--trump-display-left'); el.style.removeProperty('--trump-display-top'); return; }
+  var r = getRect();
+  el.style.setProperty('--trump-display-left', Math.round(r.left + _trumpSpot.left) + 'px');
+  el.style.setProperty('--trump-display-top', Math.round(r.top + _trumpSpot.top) + 'px');
+}
 function computeTn51AutoLayout(){
   var rect = getRect();
   var W = rect.width, H = rect.height;
@@ -2234,10 +2259,14 @@ function computeTn51AutoLayout(){
   if(W > H * 1.15) return _computeTn51Landscape(rect, W, H, S, n, m);
 
   // ----- Upright (portrait) -----
+  // v14.4.0: top of the screen, top to bottom: small menu icon (with the status line beside it),
+  // trick history + bones, then the score bar, then the table, so the scores sit next to the play.
   var GAP = 0.08;
   S.thTranspose = false; _trickHistoryFlat();
   document.body.style.removeProperty('--sidePanelW');
-  var topY2 = _layoutTopY(rect) + m;
+  document.body.classList.add('stackTop');
+  var insP = _getSafeInsets();
+  var topY2 = insP.t + 4 + 34 + 4;
   var s1 = Math.min((W - 2 * m) / (56 * (n + (n - 1) * GAP)), 0.22 * H / 112, 1.6);
   var pitch1 = 56 * s1 * (1 + GAP);
   var handCY = H - (m + 4) - 56 * s1, handTop = handCY - 56 * s1, handCX = W / 2;
@@ -2252,7 +2281,11 @@ function computeTn51AutoLayout(){
   S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
   S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
   _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
-  var tabL = m, tabR = W - m, tabT = thTop + thBoxH + m, tabB = handTop - m;
+  var scoreTop = thTop + thBoxH + 4;
+  document.body.style.setProperty('--scoreTop', scoreTop + 'px');
+  var tbEl = document.getElementById('topbar');
+  var tbH = tbEl ? tbEl.offsetHeight : 44;
+  var tabL = m, tabR = W - m, tabT = scoreTop + tbH + m, tabB = handTop - m;
 
   // Regular hexagon (60-degree sides) built out from the centre at the largest size that fits
   var availW = tabR - tabL, availH = tabB - tabT;
@@ -2284,6 +2317,7 @@ function computeTn51AutoLayout(){
 //  4. Played tiles in the middle are up to 1.25x the other players' tiles, packed around LEAD.
 //  5. Player markers sit outside the rows; the trick-history panel uses 6 rows (one per trick).
 function _computeTn51Landscape(rect, W, H, S, n, m){
+  document.body.classList.remove('stackTop');
   var ins = _getSafeInsets();
   var panel = _landscapePanel(W, H, m, 6, S, n);
   var tabL = ins.l + m, tabR = panel.panelX - m;
@@ -2348,7 +2382,9 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
 
 function applyTn51Settings(){
   if(GAME_MODE !== 'TN51') return;
+  _trumpSpot = null;
   if(TN51_AUTO_LAYOUT){ try { computeTn51AutoLayout(); } catch(e){ console.warn('TN51 auto layout failed', e); } }
+  _applyTrumpSpot();
   const s = TN51_SETTINGS;
   const L = LAYOUT.sections;
   // P1 Hand (bottom, horizontal, right-to-left) — 6 tiles in TN51
@@ -2755,6 +2791,8 @@ function refreshMoonGhosts(){
 // ============================================================
 var T42_AUTO_LAYOUT = true;
 function computeT42AutoLayout(){
+  document.body.classList.remove('stackTop');
+  _trumpSpot = null; _applyTrumpSpot();
   var rect = getRect();
   var W = rect.width, H = rect.height;
   if(W < 100 || H < 100) return null;
@@ -2963,6 +3001,7 @@ function initGameMode(mode){
 function _usesAutoLayout(){ return (GAME_MODE === 'TN51' && TN51_AUTO_LAYOUT) || (GAME_MODE === 'T42' && typeof T42_AUTO_LAYOUT !== 'undefined' && T42_AUTO_LAYOUT); }
 function _updateFluidLayoutClass(){
   var on = _usesAutoLayout();
+  if(!on) document.body.classList.remove('stackTop');
   document.body.classList.toggle('fluidLayout', on);
   document.body.classList.toggle('landscapeLayout', on && window.innerWidth > window.innerHeight * 1.15);
 }
@@ -6803,8 +6842,7 @@ function createPersistentLeadPip(){
   // If already exists, just update position
   if(leadDominoSprite){
     const pos = getLeadDominoPosition();
-    leadDominoSprite.style.left = (pos.x - size/2) + 'px';
-    leadDominoSprite.style.top = (pos.y - (size + 16)/2) + 'px';
+    _centerLeadPip(pos);
     return;
   }
 
@@ -6828,11 +6866,16 @@ function createPersistentLeadPip(){
   canvas.style.height = size + 'px';
   leadDominoSprite.appendChild(canvas);
 
-  const pos = getLeadDominoPosition();
-  leadDominoSprite.style.left = (pos.x - size/2) + 'px';
-  leadDominoSprite.style.top = (pos.y - (size + 16)/2) + 'px';
-
   document.getElementById('tableMain').appendChild(leadDominoSprite);
+  _centerLeadPip(getLeadDominoPosition());
+}
+// v14.4.0: centre the LEAD square on its spot using its real size (border and padding included);
+// it used to sit ~3px right and low because only the 36px content box was counted
+function _centerLeadPip(pos){
+  if(!leadDominoSprite) return;
+  var w = leadDominoSprite.offsetWidth || 36, h = leadDominoSprite.offsetHeight || 52;
+  leadDominoSprite.style.left = (pos.x - w / 2) + 'px';
+  leadDominoSprite.style.top = (pos.y - h / 2) + 'px';
 }
 
 let leadDominoHideTimeout = null;  // Track pending hide timeout
@@ -12050,10 +12093,7 @@ function refreshLayout(){
 
   // Reposition lead domino if visible
   if(leadDominoSprite){
-    const pos = getLeadDominoPosition();
-    const size = 36;  // Square size
-    leadDominoSprite.style.left = (pos.x - size/2) + 'px';
-    leadDominoSprite.style.top = (pos.y - (size + 16)/2) + 'px';  // Extra height for label
+    _centerLeadPip(getLeadDominoPosition());
   }
 
   // Note: Trick history dominoes are in fixed positions and handled by their own layout
@@ -12090,6 +12130,24 @@ function _updateLandscapeClock(){
 setInterval(_updateLandscapeClock, 15000);
 window.addEventListener('resize', function(){ setTimeout(_updateLandscapeClock, 400); });
 setTimeout(_updateLandscapeClock, 500);
+
+// v14.4.0: while the home screen shows, the page behind it is navy (not felt green), so no green
+// shows above or below it on an iPhone home-screen app
+(function(){
+  function sync(){
+    var sb = document.getElementById('startScreenBackdrop');
+    var on = !!sb && sb.style.display !== 'none' && getComputedStyle(sb).display !== 'none';
+    document.documentElement.classList.toggle('onHome', on);
+    var tc = document.querySelector('meta[name="theme-color"]');
+    if(tc) tc.setAttribute('content', on ? '#01001e' : '#1a5c2a');
+  }
+  function start(){
+    var sb = document.getElementById('startScreenBackdrop');
+    if(sb) new MutationObserver(sync).observe(sb, { attributes: true, attributeFilter: ['style', 'class'] });
+    sync();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
 
 // v14.3.8: a 180-degree flip keeps the same size but moves the camera to the other side
 function _onFlip(){ _safeInsets = null; window.dispatchEvent(new Event('resize')); }
