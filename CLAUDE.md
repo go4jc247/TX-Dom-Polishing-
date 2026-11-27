@@ -210,7 +210,7 @@ function _lazyLoad(src, cb) {
    so each domino stays one continuous sprite (hand -> played -> trick history).
    STATUS (v14.3.6): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
-   thTranspose; v14.3.6: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
+   thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
    Remaining: Moon still uses its hand-tuned MOON_SETTINGS layout (letterboxed).
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
