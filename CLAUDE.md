@@ -193,6 +193,21 @@ function _lazyLoad(src, cb) {
 
 ## BACKLOG (future tasks, not urgent)
 
+### TO-DO LIST (TX-Dom-Polishing-, agreed Nov 26, 2026)
+1. Nello: rule options for how Nello is played; fix dominoes that stay invisible after a re-shuffle
+2. Moon: check it works as 1 vs 1 vs 1
+3. TN51: check it works as 3 vs 3 (2 teams of 3)
+4. Monte Carlo upgrade: allow running it right after the deal, at any stage.
+   - Before bidding/trump: let the player propose a bid and a trump, then simulate
+   - If the proposed bid is below the current minimum/high bid, warn "not a winning bid"
+     but still let the simulation run
+   - Today it only runs when you won the bid and are leading trick 1
+   - Keep it an advanced option, not for everyday play
+5. On hold: multiplayer and observer testing (brother may take multiplayer later)
+6. Later / optional: tutorial redo, physics shuffle as an optional extra, Pure 42 mode,
+   3D table as a separate interface
+
+
 ### Audio Quality Upgrade
 - Current audio files in `assets/audio/` are heavily compressed (were embedded as base64)
 - User has original high-quality source files
