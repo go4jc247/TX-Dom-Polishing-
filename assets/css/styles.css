@@ -2052,7 +2052,7 @@ body.p4Down #placeholder-p4{ visibility:hidden; }
 /* v14.4.1: iOS lays a frosted blur over everything under the status bar and a little below it
    (about 40px). Nothing the player needs to read goes in that band: --sbTop is the status bar
    plus the band, and 0 when there is no status bar (e.g. sideways). */
-:root{ --sbTop: env(safe-area-inset-top); }   /* v14.4.3: blur band removed (Reduce Transparency fixes the blur) */
+:root{ --sbTop: calc(env(safe-area-inset-top) + min(16px, env(safe-area-inset-top) * 1000)); }   /* v14.5.0: +16px below the clock */   /* v14.4.3: blur band removed (Reduce Transparency fixes the blur) */
 
 /* v14.4.2: iOS home-screen apps get a page area ~47pt shorter than the screen and fill the rest
    with the page background. Make that background the table's own darkened edge colour (felt C
@@ -2087,3 +2087,12 @@ html.onHome, html.onHome body{ background:#0a3e8a !important; }
 html.onHome #statusTint{ display:none !important; }
 #startScreenBackdrop{ bottom:auto !important; height:100vh !important; height:100dvh !important; }
 html.onHome, html.onHome body{ background:#01001e !important; }
+
+/* v14.5.0 TEMPORARY bottom-edge test (home screen only). Yellow = where the page ends (bottom:0).
+   Red = bottom of a 100dvh-tall box. If yellow sits above a band, the page is short. */
+#edgeTestPage, #edgeTestDvh, #edgeTestLvh, #edgeTestInfo{ display:none; }
+html.onHome #edgeTestPage{ display:block; position:fixed; left:0; right:0; bottom:0; height:4px; background:#ffd400; z-index:3000; pointer-events:none; }
+html.onHome #edgeTestDvh{ display:block; position:fixed; left:30%; right:30%; top:0; height:100dvh; border-bottom:4px solid #ff2d2d; box-sizing:border-box; z-index:3001; pointer-events:none; }
+html.onHome #edgeTestLvh{ display:block; position:fixed; left:0; width:1px; top:0; height:100lvh; visibility:hidden; pointer-events:none; }
+html.onHome #edgeTestInfo{ display:block; position:fixed; left:60px; right:60px; top:calc(env(safe-area-inset-top) + 14px); z-index:3002; pointer-events:none;
+  font:600 11px/1.3 ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,0.55); padding:4px 6px; border-radius:6px; text-align:center; }
