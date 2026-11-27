@@ -2078,6 +2078,10 @@ var BUILTIN_DEVICE_PRESETS = {
 // V12: Screen name is now inline on start screen — no popup needed
 // updateScreenNameUI() is called in the IIFE above
 
+// v14.0.2: game.js ran the stub versions of these at startup; run the real ones now
+loadGameLog();
+checkForSavedGame();
+
 // Show start screen on load
 showStartScreen();
 

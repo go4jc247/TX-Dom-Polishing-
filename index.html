@@ -269,7 +269,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div style="text-align:center;">
       <div style="font-size:24px;font-weight:800;color:#fff;margin-bottom:4px;">TN51 / TX42 Dominoes</div>
-      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.0.1</div>
+      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.0.2</div>
       <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
         <div>Built: February 2026</div>
         <div>Game modes: Tennessee 51, Texas 42</div>
@@ -1114,6 +1114,11 @@ if ('serviceWorker' in navigator) {
 <script src="./assets/js/mp-social.js" defer></script>
 <script src="./assets/js/orientation.js" defer></script>
 <script src="./assets/js/popup-config.js" defer></script>
+<!-- v14.0.2: these used to be lazy-loaded, but nothing ever loaded them, so their menu
+     buttons (Monte Carlo, Replay, Notes, Resume, logs) did nothing and saving was off. -->
+<script src="./assets/js/replay.js" defer></script>
+<script src="./assets/js/dev-tools.js" defer></script>
+<script src="./assets/js/monte-carlo.js" defer></script>
 
 <!-- TN51 Layout Settings Popup -->
 <div id="tn51SettingsBackdrop" class="modalBackdrop" style="display:none;z-index:2000;">
