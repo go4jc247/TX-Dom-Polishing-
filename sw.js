@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.4 — sideways TN51 redesigned around a big hand
+// Version: v14.3.5 — player tags, sideways boneyard drawer, popups centred on the table
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.4';
+const CACHE_NAME = 'tx-dom-v14.3.5';
 const urlsToCache = [
   './index.html',
   './sw.js',

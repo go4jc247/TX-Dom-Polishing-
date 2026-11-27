@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.4'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.5'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2228,7 +2228,7 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   var w = 56 * sOpp, depth = 112 * sOpp;
   // 2. Half-length of the top/bottom edges: at least a regular hexagon's, and wide enough that
   // P2/P6's end tiles clear your row
-  var B = Math.max(Ls2 / 2, handW / 2 + 1.3 * w + 6);
+  var B = Math.max(Ls2 / 2, handW / 2 + 2.4 * w + 10);
   // Keep the whole table (plus outside markers) inside the table area
   var maxHalf = (tabR - tabL) / 2 - depth / 2 - 40;
   if(B + Ls2 / 2 > maxHalf){ B = Math.max(Ls2 / 2, maxHalf - Ls2 / 2); }
@@ -2241,9 +2241,10 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
 
   // 4. Played tiles: in proportion (up to 1.25x the others), tight around the lead square
   var g = 4;
-  var innerTop = Ry - 56 * sOpp - 6;                  // centre to P4 row's inner face
-  var innerBottom = Ry - 56 * s1 - 6;                 // centre to your row's inner face
-  var innerSide = 0.866 * B + 0.5 * Ry - 56 * sOpp - 6; // centre to the slanted rows' inner faces
+  var TAG = 30;                                       // room for a player tag inside each row
+  var innerTop = Ry - 56 * sOpp - TAG;                // centre to P4 row's inner face, less the tag
+  var innerBottom = Ry - 56 * s1 - TAG;               // centre to your row's inner face, less the tag
+  var innerSide = 0.866 * B + 0.5 * Ry - 56 * sOpp - TAG; // same for the slanted rows
   var sPlay = Math.min(1.25 * sOpp,
                        (Math.min(innerTop, innerBottom) - g) / 112,
                        (innerSide - 0.866 * g - 0.25 * g) / 149.2);
@@ -2253,18 +2254,20 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   for(var q = 1; q <= 6; q++){ S['p' + q + 'TrickX'] = (cx + pos[q][0]) / W; S['p' + q + 'TrickY'] = (cy + pos[q][1]) / H; }
   S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = cy / H;
 
-  // 5. Player markers outside the rows
-  var mr = 16;
+  // 5. Player tags: on the table side of each row, centred on it, so every tag reads as
+  // "this row belongs to this player". Yours sits just above your hand.
   var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
   var mids = { 2: [-B - Ls2 / 4, Ry / 2], 3: [-B - Ls2 / 4, -Ry / 2], 5: [B + Ls2 / 4, -Ry / 2], 6: [B + Ls2 / 4, Ry / 2] };
-  var outD = depth / 2 + mr + 6;
+  var inD = depth / 2 + 16;
   for(var q2 in nrm){
-    S['ind' + q2 + 'x'] = (cx + mids[q2][0] + nrm[q2][0] * outD) / W;
-    S['ind' + q2 + 'y'] = (cy + mids[q2][1] + nrm[q2][1] * outD) / H;
+    S['ind' + q2 + 'x'] = (cx + mids[q2][0] - nrm[q2][0] * inD) / W;
+    S['ind' + q2 + 'y'] = (cy + mids[q2][1] - nrm[q2][1] * inD) / H;
   }
-  var rowHalf4 = 2.5 * pitchOpp + w / 2;
-  S.ind4x = (cx - rowHalf4 - mr - 8) / W; S.ind4y = Math.max(mr + 4, cy - Ry) / H;
-  S.ind1x = (cx - handW / 2 - mr - 10) / W; S.ind1y = edgeY / H;
+  S.ind4x = cx / W; S.ind4y = (cy - Ry + depth / 2 + 15) / H;
+  S.ind1x = cx / W; S.ind1y = (edgeY - 56 * s1 - 15) / H;
+  // Status line lives in the bottom-left corner; keep it clear of P2's row and your hand
+  var statusMax = Math.max(120, cx - B - Ls2 / 4 - ins.l - 12);
+  document.body.style.setProperty('--statusMaxW', Math.round(statusMax) + 'px');
 
   PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
   PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
@@ -6990,7 +6993,7 @@ function positionPlayerIndicators(){
       if(p === 1 && playerName && !playerNoName){
         el.textContent = getPlayerInitials(playerName);
       } else if(!MULTIPLAYER_MODE){
-        el.textContent = 'P' + p;
+        el.textContent = (p === 1) ? 'You' : 'P' + p;   // v14.3.5
       }
       // Moon: assign 3 individual colors (P1 blue, P2 red, P3 neon green)
       if(GAME_MODE === 'MOON'){
@@ -7070,6 +7073,19 @@ function recenterHand(seat){
 
 function setStatus(msg){
   statusBar.textContent = msg;
+  _updateTurnTag(msg);
+}
+
+// v14.3.5: light up the tag of the player whose turn it is
+function _updateTurnTag(msg){
+  try {
+    var who = null, m = /\b(?:P|Player )(\d)\s+plays/.exec(msg || '');
+    if(m) who = parseInt(m[1], 10);
+    else if(/Click a domino to play|You play|Your turn/i.test(msg || '')) who = 1;
+    document.querySelectorAll('.playerIndicator').forEach(function(el){
+      el.classList.toggle('turn', who !== null && el.id === 'playerIndicator' + who);
+    });
+  } catch(e){}
 }
 
 function enablePlayer1Clicks(){
@@ -10429,6 +10445,7 @@ function toggleBoneyard2(){
     renderBoneyard2();
   } else {
     container.style.display = 'none';
+    _hideBoneyardPanel();
     // Restore trick history
     if(thBg) thBg.style.display = '';
     showTrickHistorySprites();
@@ -10472,7 +10489,74 @@ function showTrickHistorySprites(){
   });
 }
 
+// v14.3.5: sideways boneyard. The side panel is too narrow for 36 readable dominoes, so
+// BONES opens a drawer from the right (over the right part of the table) with the same
+// layout as upright: doubles first, then one row per suit, dominoes lying flat.
+// Tap BONES again or Close to put it away.
+function renderBoneyardPanel(){
+  var host = document.getElementById('boneyardPanel');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'boneyardPanel';
+    document.getElementById('tableMain').appendChild(host);
+  }
+  var rect = getRect(), W = rect.width, H = rect.height;
+  var ins = _getSafeInsets();
+  var maxPip = session.game.max_pip, nCols = maxPip + 1, nRows = maxPip + 1;
+  var drawerW = Math.min(W * 0.5, 480);
+  var GX = 0.1, GY = 0.28, pad = 12, headH = 34;
+  var tw = (drawerW - ins.r - 2 * pad) / (nCols + (nCols - 1) * GX);
+  tw = Math.min(tw, (H - headH - 2 * pad - ins.b) / (nRows * 0.5 * (1 + GY)) );
+  var th = tw / 2;
+  host.style.cssText = 'position:absolute;z-index:5000;top:0;bottom:0;right:0;width:' + drawerW + 'px;' +
+    'padding:' + (6 + ins.t) + 'px ' + (pad + ins.r) + 'px ' + pad + 'px ' + pad + 'px;box-sizing:border-box;';
+  host.innerHTML = '';
+  var head = document.createElement('div');
+  head.className = 'byHead';
+  head.innerHTML = '<span>Boneyard</span><span class="byKey"><i class="k mine"></i>yours <i class="k played"></i>played</span>';
+  var close = document.createElement('button');
+  close.type = 'button'; close.className = 'byClose'; close.textContent = 'Close';
+  close.onclick = function(){ if(boneyard2Visible) toggleBoneyard2(); };
+  head.appendChild(close);
+  host.appendChild(head);
+  var played = new Set(), mine = new Set();
+  var key = function(t){ return Math.min(t[0], t[1]) + ',' + Math.max(t[0], t[1]); };
+  for(var team = 0; team < 2; team++) (session.game.tricks_team[team] || []).forEach(function(rec){ rec.forEach(function(t){ if(t) played.add(key(t)); }); });
+  (session.game.current_trick || []).forEach(function(pl){ if(Array.isArray(pl) && pl[1]) played.add(key(pl[1])); });
+  (session.game.hands[getLocalSeat()] || []).forEach(function(t){ if(t) mine.add(key(t)); });
+  var rows = [[]];
+  for(var d = maxPip; d >= 0; d--) rows[0].push([d, d]);
+  for(var suit = maxPip; suit >= 1; suit--){ var r = []; for(var lo = suit - 1; lo >= 0; lo--) r.push([suit, lo]); rows.push(r); }
+  var dpr = window.devicePixelRatio || 1;
+  rows.forEach(function(row){
+    var line = document.createElement('div');
+    line.style.cssText = 'display:flex;gap:' + (tw * GX) + 'px;margin-bottom:' + (th * GY) + 'px;';
+    row.forEach(function(t){
+      var k = key(t);
+      var cell = document.createElement('div');
+      cell.className = 'byCell' + (played.has(k) ? ' played' : '') + (mine.has(k) ? ' mine' : '') +
+        (session.game._is_trump_tile && session.game._is_trump_tile(t) ? ' trump' : '');
+      cell.style.cssText = 'width:' + tw + 'px;height:' + th + 'px;flex:0 0 auto;';
+      // Draw upright at full resolution, then lay it flat
+      var cvs = renderDominoCanvas(t, Math.round(th * dpr), Math.round(tw * dpr));
+      cvs.style.cssText = 'position:absolute;width:' + th + 'px;height:' + tw + 'px;left:' + ((tw - th) / 2) + 'px;top:' + ((th - tw) / 2) + 'px;transform:rotate(-90deg);border-radius:' + (th * 0.18) + 'px;';
+      cell.appendChild(cvs);
+      line.appendChild(cell);
+    });
+    host.appendChild(line);
+  });
+  host.style.display = 'block';
+}
+function _hideBoneyardPanel(){ var h = document.getElementById('boneyardPanel'); if(h) h.style.display = 'none'; }
+
 function renderBoneyard2(){
+  if(document.body.classList.contains('landscapeLayout')){
+    var _c = document.getElementById('boneyard2Container'); if(_c) _c.style.display = 'none';
+    try { renderBoneyardPanel(); } catch(e){ console.warn('boneyard panel', e); }
+    return;
+  }
+  _hideBoneyardPanel();
+  if(typeof boneyard2Visible !== 'undefined' && boneyard2Visible){ var _c2 = document.getElementById('boneyard2Container'); if(_c2) _c2.style.display = 'block'; }
   const canvas = document.getElementById('boneyard2Canvas');
   const container = document.getElementById('boneyard2Container');
   if(!canvas || !container) return;

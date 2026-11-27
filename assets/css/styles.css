@@ -1858,3 +1858,48 @@ body.landscapeLayout #statusBar{
   left:calc(8px + env(safe-area-inset-left)) !important; transform:none !important;
   max-width:24% !important; white-space:normal !important; text-align:left; font-size:12px;
 }
+
+/* ============================================================
+   v14.3.5: player tags — solid pills in the team colour, readable at a glance.
+   "You" for your own seat; the tag of whoever's turn it is lights up.
+   Team colours match the score boxes (Team 1 blue, Team 2 red).
+   ============================================================ */
+.playerIndicator{
+  width:auto !important; min-width:30px; height:22px !important; padding:0 8px; box-sizing:border-box;
+  border-radius:11px !important; opacity:1 !important; font-size:11px !important; font-weight:800 !important;
+  letter-spacing:0.3px; white-space:nowrap;
+  transform:translate(calc(-50% + 14px), calc(-50% + 14px));
+  border:1.5px solid rgba(255,255,255,0.28) !important; box-shadow:0 2px 6px rgba(0,0,0,0.35);
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+}
+.playerIndicator.team1{ background:#1d4ed8 !important; color:#fff !important; }
+.playerIndicator.team2{ background:#b91c1c !important; color:#fff !important; }
+.playerIndicator.team3{ background:#15803d !important; color:#fff !important; }
+.playerIndicator.turn{
+  border-color:#fde68a !important; box-shadow:0 0 0 3px rgba(253,230,138,0.45), 0 0 14px rgba(253,230,138,0.7);
+  transform:translate(calc(-50% + 14px), calc(-50% + 14px)) scale(1.15);
+}
+/* Score boxes carry the same team colours as the tags */
+#team1Pill{ border-left:4px solid #3b82f6 !important; }
+#team2Pill{ border-left:4px solid #ef4444 !important; }
+
+/* v14.3.5 sideways: popups centre on the table (not under the side panel) */
+body.landscapeLayout .modalBackdrop{ padding-right:var(--sidePanelW, 20%); box-sizing:border-box; }
+body.landscapeLayout #roundEndOverlay{ padding-top:0 !important; padding-right:var(--sidePanelW, 20%) !important; box-sizing:border-box; }
+body.landscapeLayout #statusBar{ max-width:var(--statusMaxW, 24%) !important; }
+
+/* v14.3.5 sideways boneyard: a drawer from the right */
+#boneyardPanel{ display:none; background:rgba(6,32,18,0.97); border-left:1px solid rgba(255,255,255,0.15);
+  box-shadow:-8px 0 24px rgba(0,0,0,0.45); color:#fff; overflow:hidden; }
+#boneyardPanel .byHead{ display:flex; align-items:center; gap:10px; height:30px; margin-bottom:8px; font-weight:800; font-size:14px; }
+#boneyardPanel .byKey{ flex:1; font-weight:600; font-size:11px; opacity:0.75; display:flex; align-items:center; gap:4px; }
+#boneyardPanel .byKey .k{ display:inline-block; width:12px; height:8px; border-radius:2px; background:#f3ead8; margin-left:6px; }
+#boneyardPanel .byKey .k.mine{ box-shadow:0 0 0 2px #fde68a; }
+#boneyardPanel .byKey .k.played{ opacity:0.25; }
+#boneyardPanel .byClose{ min-height:32px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.25);
+  background:rgba(255,255,255,0.1); color:#fff; font-weight:700; font-size:13px; }
+#boneyardPanel .byCell{ position:relative; }
+#boneyardPanel .byCell.played{ opacity:0.22; }
+#boneyardPanel .byCell.mine{ box-shadow:0 0 0 2px #fde68a; border-radius:4px; }
+#boneyardPanel .byCell.trump::after{ content:''; position:absolute; inset:-2px; border:2px solid rgba(74,222,128,0.9); border-radius:5px; pointer-events:none; }
+body:not(.landscapeLayout) #boneyardPanel{ display:none !important; }
