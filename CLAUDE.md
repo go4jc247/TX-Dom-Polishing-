@@ -210,7 +210,8 @@ function _lazyLoad(src, cb) {
    - Stage 1: quick fixes. Rotation leaves gaps (refreshLayout uses original deal slots, should
      recenter); popups never taller than the screen, scrolling body, buttons pinned at bottom
    - Stage 2: new layout engine, TN51 FIRST (owner's call: hex table, 60-degree seats are the
-     hardest and what breaks). Behind a "New layout (beta)" switch; old tables kept as fallback
+     hardest and what breaks). No beta switch (owner: nobody else uses it yet); replace the
+     old tables directly and rely on git history to roll back
    - Stage 3: T42 and Moon, then landscape
    - Stage 4: slim top bar (Team 1 | marks | Team 2) + Menu button replacing the gear
    - Stage 5: lay-down / show hands using the tiles on the table (lift + glow yours, flip others)
