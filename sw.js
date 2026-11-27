@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.3 — sideways: rows almost touching, big centre tiles, markers outside
+// Version: v14.3.4 — sideways TN51 redesigned around a big hand
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.3';
+const CACHE_NAME = 'tx-dom-v14.3.4';
 const urlsToCache = [
   './index.html',
   './sw.js',

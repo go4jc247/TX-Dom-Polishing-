@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.3'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.4'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2047,7 +2047,8 @@ function _getSafeInsets(){
 
 // v14.3.0: landscape side panel on the right: scores at the top (the score bar is restyled
 // into the panel by CSS), then the trick history, one trick per row.
-function _landscapePanel(W, H, m, nPlayers, S){
+function _landscapePanel(W, H, m, nPlayers, S, nTricks){
+  nTricks = nTricks || 8;
   // v14.3.1: the upright trick-history grid turned 90 degrees: dominoes stand upright,
   // one trick per row, same groupings, so the panel is a slim strip down the right side.
   var ins = _getSafeInsets();
@@ -2055,13 +2056,13 @@ function _landscapePanel(W, H, m, nPlayers, S){
   var pad = Math.max(5, Math.round(m * 0.8));
   var GAPX = 0.12, GAPY = 0.06;
   // First pass: a provisional width so the score boxes can be measured
-  var panelW = Math.max(150, Math.min(220, W * 0.17));
+  var panelW = Math.max(160, Math.min(260, W * 0.19));
   document.body.style.setProperty('--sidePanelW', (panelW + ins.r) + 'px');
   var tb = document.getElementById('topbar');
   var scoresBottom = tb ? (tb.getBoundingClientRect().bottom - rect.top) : 70;
   var thTop = scoresBottom + Math.round(m / 2);
   var availH = H - thTop - Math.max(ins.b, m);
-  var sth = Math.min((availH - 2 * pad) / (112 * (8 + 7 * GAPY)), (panelW - 2 * pad) / (56 * (nPlayers + (nPlayers - 1) * GAPX)), 0.5);
+  var sth = Math.min((availH - 2 * pad) / (112 * (nTricks + (nTricks - 1) * GAPY)), (panelW - 2 * pad) / (56 * (nPlayers + (nPlayers - 1) * GAPX)), 0.6);
   var tileW = 56 * sth, tileH = 112 * sth;
   var pitchX = tileW * (1 + GAPX), pitchY = tileH * (1 + GAPY);
   var gridW = tileW + (nPlayers - 1) * pitchX;
@@ -2099,91 +2100,8 @@ function _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H){
   }
 }
 
-function computeTn51AutoLayout(){
-  var rect = getRect();
-  var W = rect.width, H = rect.height;
-  if(W < 100 || H < 100) return null;
-  var S = TN51_SETTINGS;
-  var n = (session && session.game && session.game.hand_size) ? session.game.hand_size : 6;
-  var m = Math.max(6, Math.round(Math.min(W, H) * 0.02));
-  var landscape = W > H * 1.15;
-  var ins = _getSafeInsets();
-  var GAP = 0.08;
-  var s1, pitch1, handCY, handTop, handCX;
-  var tabL, tabR, tabT, tabB;
-
-  if(landscape){
-    // Right panel holds scores + trick history; the table gets the full height on the left
-    var panel = _landscapePanel(W, H, m, 6, S);
-    var topY = _layoutTopY(rect, ['statusBar']) + m;
-    tabL = ins.l + m; tabR = panel.panelX - m;
-    s1 = Math.min((tabR - tabL) * 0.72 / (56 * (n + (n - 1) * GAP)), 0.21 * H / 112, 1.4);
-    pitch1 = 56 * s1 * (1 + GAP);
-    handCY = H - Math.max(ins.b, m) - 4 - 56 * s1; handTop = handCY - 56 * s1;
-    handCX = (tabL + tabR) / 2;
-    tabT = topY; tabB = handTop - m;
-  } else {
-    S.thTranspose = false; _trickHistoryFlat();
-    document.body.style.removeProperty('--sidePanelW');
-    var topY2 = _layoutTopY(rect) + m;
-    var handW = W - 2 * m;
-    s1 = Math.min(handW / (56 * (n + (n - 1) * GAP)), 0.22 * H / 112, 1.6);
-    pitch1 = 56 * s1 * (1 + GAP);
-    handCY = H - (m + 4) - 56 * s1; handTop = handCY - 56 * s1; handCX = W / 2;
-    // Trick history box: 8 columns (tricks) x 6 rows (one tile per player)
-    var thPad = Math.max(6, m);
-    var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112 * 1.06), (H * 0.2 - 2 * thPad) / (6 * 56 * 1.3), 0.6);
-    var thTileW = 112 * sth, thTileH = 56 * sth;
-    var thInnerW = W - 2 * m - 2 * thPad;
-    var thBoxW = thInnerW + 2 * thPad, thBoxH = 6 * thTileH * 1.3 + 2 * thPad;
-    var thLeft = (W - thBoxW) / 2, thTop = topY2;
-    S.thScale = sth;
-    S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
-    S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
-    _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
-    tabL = m; tabR = W - m; tabT = thTop + thBoxH + m; tabB = handTop - m;
-  }
-
-  // --- Hexagon. Upright: regular (60-degree sides). Sideways: allowed to be wider than tall,
-  // and each row is turned to match its own side, so rows still line up with the table edge.
-  var availW = tabR - tabL, availH = tabB - tabT;
-  var ROW_FILL = 0.80, OPP_GAP = 0.15;
-  var cx = (tabL + tabR) / 2, cy = (tabT + tabB) / 2;
-  var Rx, Ry, sOpp, depth;
-  function tileScaleFor(rx, ry){
-    var side = Math.sqrt(rx * rx / 4 + ry * ry), top = rx;
-    return Math.min(ROW_FILL * Math.min(side, top) / (56 * (6 + 5 * OPP_GAP)), 0.75);
-  }
-  // v14.3.1: always a true hexagon (60-degree sides), built out from the centre at the
-  // largest size that fits, in both orientations. Never stretched.
-  var equalSize = landscape;
-  if(landscape){
-    // v14.3.3: rows almost meet their neighbours. End tiles stop just short of the corner:
-    // a tile w wide and 2w deep clears the next row when its centre is ~1.1w from the corner.
-    OPP_GAP = 0.06;
-    ROW_FILL = (5 * (1 + OPP_GAP) + 1) / (5 * (1 + OPP_GAP) + 2.25);
-  }
-  var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP));
-  var R = Math.min(availW / 2 / (1 + 56 * k + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
-  if(landscape){
-    // v14.3.2: sideways, everyone's dominoes are the same size and your hand sits on the
-    // bottom edge of the hexagon like everyone else's. The hexagon is as big as the height
-    // allows: your row must be fully on screen, the row across from you may run off the top.
-    var dK = 112 * k, bp = Math.max(ins.b, m) + 4, CUT = 0.6;
-    R = Math.min((H - bp) / (1.732 + dK * (1 - CUT)), (tabR - tabL) / 2 / (1 + dK / 2));
-    cx = (tabL + tabR) / 2;
-    cy = H - bp - R * (0.866 + dK / 2);
-  }
-  R = Math.max(R, 40); Rx = R; Ry = 0.866 * R;
-  sOpp = tileScaleFor(Rx, Ry);
-  if(equalSize){
-    // Your row: same size as the others, upright, along the bottom edge
-    s1 = sOpp; pitch1 = 56 * s1 * (1 + OPP_GAP);
-    handCX = cx; handCY = cy + Ry;
-  }
-  var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
-
-  var V = { R: [Rx, 0], LR: [Rx / 2, Ry], LL: [-Rx / 2, Ry], L: [-Rx, 0], UL: [-Rx / 2, -Ry], UR: [Rx / 2, -Ry] };
+// Lay opponent rows P2..P6 along the hexagon's edges (shared by upright and sideways layouts)
+function _placeTn51Rows(S, V, cx, cy, sOpp, pitchOpp, n, W, H){
   var edges = { 2: ['L', 'LL'], 3: ['L', 'UL'], 4: ['UL', 'UR'], 5: ['R', 'UR'], 6: ['R', 'LR'] };
   var ORIG_RZ = { 2: 240, 3: 120, 4: 180, 5: 60, 6: 300 };
   for(var p = 2; p <= 6; p++){
@@ -2200,7 +2118,7 @@ function computeTn51AutoLayout(){
     else if(p === 3){ S.p3Spacing = -dyN; S.p3xOff = dxN + dyN; }
     else if(p === 5){ S.p5Spacing = -dyN; S.p5xOff = -dxN + dyN; }
     else if(p === 6){ S.p6Spacing = dyN;  S.p6xOff = -dxN - dyN; }
-    // Turn the tiles to face across their own side (matters when the hexagon is stretched)
+    // Turn the tiles to face across their own side
     var nx = d[1], ny = -d[0];
     if(nx * (va[0] + vb[0]) + ny * (va[1] + vb[1]) < 0){ nx = -nx; ny = -ny; }
     var rz = Math.atan2(-nx, ny) * 180 / Math.PI;
@@ -2210,6 +2128,49 @@ function computeTn51AutoLayout(){
     var sec = LAYOUT.sections.find(function(x){ return x.name === 'Player_' + p + '_Hand'; });
     if(sec) sec.dominoes.forEach(function(dm){ dm.rotZ = Math.round(rz * 10) / 10; });
   }
+}
+
+function computeTn51AutoLayout(){
+  var rect = getRect();
+  var W = rect.width, H = rect.height;
+  if(W < 100 || H < 100) return null;
+  var S = TN51_SETTINGS;
+  var n = (session && session.game && session.game.hand_size) ? session.game.hand_size : 6;
+  var m = Math.max(6, Math.round(Math.min(W, H) * 0.02));
+  if(W > H * 1.15) return _computeTn51Landscape(rect, W, H, S, n, m);
+
+  // ----- Upright (portrait) -----
+  var GAP = 0.08;
+  S.thTranspose = false; _trickHistoryFlat();
+  document.body.style.removeProperty('--sidePanelW');
+  var topY2 = _layoutTopY(rect) + m;
+  var s1 = Math.min((W - 2 * m) / (56 * (n + (n - 1) * GAP)), 0.22 * H / 112, 1.6);
+  var pitch1 = 56 * s1 * (1 + GAP);
+  var handCY = H - (m + 4) - 56 * s1, handTop = handCY - 56 * s1, handCX = W / 2;
+  // Trick history box: 8 columns (tricks) x 6 rows (one tile per player)
+  var thPad = Math.max(6, m);
+  var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112 * 1.06), (H * 0.2 - 2 * thPad) / (6 * 56 * 1.3), 0.6);
+  var thTileW = 112 * sth, thTileH = 56 * sth;
+  var thInnerW = W - 2 * m - 2 * thPad;
+  var thBoxW = thInnerW + 2 * thPad, thBoxH = 6 * thTileH * 1.3 + 2 * thPad;
+  var thLeft = (W - thBoxW) / 2, thTop = topY2;
+  S.thScale = sth;
+  S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
+  S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
+  _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
+  var tabL = m, tabR = W - m, tabT = thTop + thBoxH + m, tabB = handTop - m;
+
+  // Regular hexagon (60-degree sides) built out from the centre at the largest size that fits
+  var availW = tabR - tabL, availH = tabB - tabT;
+  var ROW_FILL = 0.80, OPP_GAP = 0.15;
+  var cx = (tabL + tabR) / 2, cy = (tabT + tabB) / 2;
+  var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP));
+  var R = Math.max(40, Math.min(availW / 2 / (1 + 56 * k + 0.02), availH / 2 / (0.866 + 56 * k + 0.02)));
+  var Rx = R, Ry = 0.866 * R;
+  var sOpp = Math.min(k * R, 0.75);
+  var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
+  var V = { R: [Rx, 0], LR: [Rx / 2, Ry], LL: [-Rx / 2, Ry], L: [-Rx, 0], UL: [-Rx / 2, -Ry], UR: [Rx / 2, -Ry] };
+  _placeTn51Rows(S, V, cx, cy, sOpp, pitchOpp, n, W, H);
   S.p1Scale = s1; S.p1Spacing = pitch1 / W;
   S.p1x = (handCX + (n - 1) / 2 * pitch1) / W; S.p1y = handCY / H;
 
@@ -2217,43 +2178,98 @@ function computeTn51AutoLayout(){
   var Ryn = Ry / 0.866;
   var played = { 1: [0, 0.46], 2: [-0.34, 0.20], 3: [-0.34, -0.20], 4: [0, -0.46], 5: [0.34, -0.20], 6: [0.34, 0.20] };
   var marks  = { 1: [0, 0.64], 2: [-0.554, 0.32], 3: [-0.554, -0.32], 4: [0, -0.64], 5: [0.554, -0.32], 6: [0.554, 0.32] };
-  // Keep P4's marker and played tile clear of P4's row when the hexagon is squashed (landscape)
-  var depthO = 112 * sOpp, markR = 15;
-  var mkY = Math.min(0.64 * Ryn, Ry - depthO / 2 - markR - 2);
-  var plY = Math.min(0.46 * Ryn, mkY - markR - 28 * sOpp - 3);
-  marks[4][1] = -mkY / Ryn; marks[1][1] = mkY / Ryn; played[4][1] = -plY / Ryn; played[1][1] = plY / Ryn;
   for(var q = 1; q <= 6; q++){
     S['p' + q + 'TrickX'] = (cx + played[q][0] * Rx) / W; S['p' + q + 'TrickY'] = (cy + played[q][1] * Ryn) / H;
     S['ind' + q + 'x'] = (cx + marks[q][0] * Rx) / W;     S['ind' + q + 'y'] = (cy + marks[q][1] * Ryn) / H;
   }
   S.trickScale = sOpp; S.leadScale = sOpp; S.leadX = cx / W; S.leadY = cy / H;
-  var sPlay = sOpp;
-  if(equalSize){
-    // v14.3.3 sideways: played tiles as big as the open middle allows, packed tight around the
-    // lead square: P2/P3 on the left, P5/P6 on the right, P4 above, P1 below.
-    var ai = 0.866 * R - 56 * sOpp - 6;        // centre to the inner face of each row
-    var g = 4;
-    // Largest size whose outer corners stay inside every row's inner face (checked against the
-    // slanted rows for P2/P3/P5/P6 and the top/bottom rows for P4/P1)
-    sPlay = Math.max(sOpp, Math.min((ai - 6 - 0.866 * g - 0.25 * g) / 149.2, (ai - 6 - g) / 112, 0.9));
-    var cTopY = 28 * sPlay + g / 2, side = 84 * sPlay + g, vert = 84 * sPlay + g;
-    var pos = { 1: [0, vert], 4: [0, -vert], 2: [-side, cTopY], 3: [-side, -cTopY], 5: [side, -cTopY], 6: [side, cTopY] };
-    for(var q2 = 1; q2 <= 6; q2++){ S['p' + q2 + 'TrickX'] = (cx + pos[q2][0]) / W; S['p' + q2 + 'TrickY'] = (cy + pos[q2][1]) / H; }
-    S.trickScale = sPlay; S.leadScale = sPlay;
-    // Player markers move outside the table, just beyond each row
-    var mr = 16, outD = 0.866 * R + 56 * sOpp + mr + 6;
-    var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
-    for(var q3 in nrm){ S['ind' + q3 + 'x'] = (cx + nrm[q3][0] * outD) / W; S['ind' + q3 + 'y'] = (cy + nrm[q3][1] * outD) / H; }
-    var rowHalf = 2.5 * 56 * sOpp * (1 + OPP_GAP) + 28 * sOpp;
-    // P4 (row may run off the top) and P1 (row at the bottom): marker beside the left end of the row
-    S.ind4x = (cx - rowHalf - mr - 8) / W; S.ind4y = Math.max(mr + 4, cy - 0.866 * R) / H;
-    S.ind1x = (cx - rowHalf - mr - 8) / W; S.ind1y = (cy + 0.866 * R) / H;
+  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sOpp);
+  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sOpp);
+  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sOpp / 0.393);
+  _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: false, R: R, sOpp: sOpp, s1: s1, cx: cx, cy: cy };
+  return _tn51LastGeom;
+}
+
+// v14.3.4: SIDEWAYS (landscape) TN51 layout, designed from your hand outward.
+//  1. Your hand gets a big box at the bottom centre (about 19% of the screen height tall).
+//  2. The table is a hexagon with true 60-degree corners, but its top and bottom edges are
+//     allowed to be longer than its slanted sides, so the bottom edge is wide enough for your
+//     row and P2/P6 end just beyond the ends of your hand.
+//  3. The slanted sides are as long as the height allows; everyone else's rows are sized to
+//     them (rows stop just short of each other at the corners). P4's row may run off the top.
+//  4. Played tiles in the middle are up to 1.25x the other players' tiles, packed around LEAD.
+//  5. Player markers sit outside the rows; the trick-history panel uses 6 rows (one per trick).
+function _computeTn51Landscape(rect, W, H, S, n, m){
+  var ins = _getSafeInsets();
+  var panel = _landscapePanel(W, H, m, 6, S, n);
+  var tabL = ins.l + m, tabR = panel.panelX - m;
+  var cx = (tabL + tabR) / 2;
+  var bp = Math.max(ins.b, m) + 4;
+
+  // 1. Your hand
+  var GAP1 = 0.08;
+  var s1 = Math.min(0.19 * H / 112, (tabR - tabL) * 0.5 / (56 * (n + (n - 1) * GAP1)), 1.4);
+  var pitch1 = 56 * s1 * (1 + GAP1);
+  var handW = (n - 1) * pitch1 + 56 * s1;
+  var edgeY = H - bp - 56 * s1;               // your row sits on the hexagon's bottom edge
+
+  // 3. Slanted sides from the height. Rows nearly meet at the corners.
+  var OPP_GAP = 0.06;
+  var ROW_FILL = (5 * (1 + OPP_GAP) + 1) / (5 * (1 + OPP_GAP) + 2.25);
+  var kL = ROW_FILL / (56 * (6 + 5 * OPP_GAP));       // tile scale per unit of side length
+  var CUT = 0.35;                                     // share of P4's row allowed off-screen
+  var Ry = edgeY / 2, sOpp = 0.4;
+  for(var it = 0; it < 8; it++){
+    var Ls = Ry / 0.866;
+    sOpp = Math.min(kL * Ls, 0.75);
+    Ry = (edgeY + (CUT - 0.5) * 112 * sOpp) / 2;
   }
+  var Ls2 = Ry / 0.866;
+  var w = 56 * sOpp, depth = 112 * sOpp;
+  // 2. Half-length of the top/bottom edges: at least a regular hexagon's, and wide enough that
+  // P2/P6's end tiles clear your row
+  var B = Math.max(Ls2 / 2, handW / 2 + 1.3 * w + 6);
+  // Keep the whole table (plus outside markers) inside the table area
+  var maxHalf = (tabR - tabL) / 2 - depth / 2 - 40;
+  if(B + Ls2 / 2 > maxHalf){ B = Math.max(Ls2 / 2, maxHalf - Ls2 / 2); }
+  var cy = edgeY - Ry;
+  var V = { L: [-B - Ls2 / 2, 0], UL: [-B, -Ry], UR: [B, -Ry], R: [B + Ls2 / 2, 0], LR: [B, Ry], LL: [-B, Ry] };
+  var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
+  _placeTn51Rows(S, V, cx, cy, sOpp, pitchOpp, n, W, H);
+  S.p1Scale = s1; S.p1Spacing = pitch1 / W;
+  S.p1x = (cx + (n - 1) / 2 * pitch1) / W; S.p1y = edgeY / H;
+
+  // 4. Played tiles: in proportion (up to 1.25x the others), tight around the lead square
+  var g = 4;
+  var innerTop = Ry - 56 * sOpp - 6;                  // centre to P4 row's inner face
+  var innerBottom = Ry - 56 * s1 - 6;                 // centre to your row's inner face
+  var innerSide = 0.866 * B + 0.5 * Ry - 56 * sOpp - 6; // centre to the slanted rows' inner faces
+  var sPlay = Math.min(1.25 * sOpp,
+                       (Math.min(innerTop, innerBottom) - g) / 112,
+                       (innerSide - 0.866 * g - 0.25 * g) / 149.2);
+  sPlay = Math.max(sPlay, sOpp * 0.8);
+  var cTopY = 28 * sPlay + g / 2, side = 84 * sPlay + g, vert = 84 * sPlay + g;
+  var pos = { 1: [0, vert], 4: [0, -vert], 2: [-side, cTopY], 3: [-side, -cTopY], 5: [side, -cTopY], 6: [side, cTopY] };
+  for(var q = 1; q <= 6; q++){ S['p' + q + 'TrickX'] = (cx + pos[q][0]) / W; S['p' + q + 'TrickY'] = (cy + pos[q][1]) / H; }
+  S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = cy / H;
+
+  // 5. Player markers outside the rows
+  var mr = 16;
+  var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
+  var mids = { 2: [-B - Ls2 / 4, Ry / 2], 3: [-B - Ls2 / 4, -Ry / 2], 5: [B + Ls2 / 4, -Ry / 2], 6: [B + Ls2 / 4, Ry / 2] };
+  var outD = depth / 2 + mr + 6;
+  for(var q2 in nrm){
+    S['ind' + q2 + 'x'] = (cx + mids[q2][0] + nrm[q2][0] * outD) / W;
+    S['ind' + q2 + 'y'] = (cy + mids[q2][1] + nrm[q2][1] * outD) / H;
+  }
+  var rowHalf4 = 2.5 * pitchOpp + w / 2;
+  S.ind4x = (cx - rowHalf4 - mr - 8) / W; S.ind4y = Math.max(mr + 4, cy - Ry) / H;
+  S.ind1x = (cx - handW / 2 - mr - 10) / W; S.ind1y = edgeY / H;
+
   PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
   PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
   PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sPlay / 0.393);
-
-  _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: landscape, Rx: Rx, Ry: Ry, sOpp: sOpp, s1: s1, cx: cx, cy: cy };
+  _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: true, B: B, Ls: Ls2, Ry: Ry, sOpp: sOpp, s1: s1, sPlay: sPlay, cx: cx, cy: cy };
   return _tn51LastGeom;
 }
 
@@ -2677,7 +2693,7 @@ function computeT42AutoLayout(){
   var s1, pitch1, handCY, handTop, handCX, tabL, tabR, tabT, tabB;
   if(landscape){
     // v14.3.0: right panel for scores + trick history; table uses the full height
-    var panel = _landscapePanel(W, H, m, 4, S);
+    var panel = _landscapePanel(W, H, m, 4, S, 7);
     tabL = ins.l + m; tabR = panel.panelX - m;
     s1 = Math.min((tabR - tabL) * 0.8 / (56 * (n + (n - 1) * GAP)), 0.21 * H / 112, 1.4);
     pitch1 = 56 * s1 * (1 + GAP);
@@ -6605,7 +6621,11 @@ function getTrickHistoryPosition(teamTrickIndex, winningTeam, playerRowIndex){
 
   // TN51/T42: original 2-team layout
   const numCols = session.game.player_count;
-  const numRows = Math.floor(section.dominoes.length / numCols);
+  let numRows = Math.floor(section.dominoes.length / numCols);
+  // v14.3.4: the sideways panel only has one row per trick in a hand (Team 1 from the top,
+  // Team 2 from the bottom; together they can never pass the hand size, so they never collide)
+  const _thS = (GAME_MODE === 'T42') ? T42_SETTINGS : TN51_SETTINGS;
+  if(_thS && _thS.thTranspose && session.game.hand_size) numRows = Math.min(numRows, session.game.hand_size);
   const maxTeamTricks = numRows - 1;
 
   let row;

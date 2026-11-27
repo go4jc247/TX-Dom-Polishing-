@@ -1851,3 +1851,10 @@ body.landscapeLayout #topbar .scoreValue{ font-size:15px; }
 body.landscapeLayout #topbar .scoreBar{ height:2px; margin-top:2px; }
 body.landscapeLayout #topbar .marksLabel{ font-size:8px; margin-bottom:0; }
 body.landscapeLayout #topbar .tallyCanvas{ height:14px; }
+
+/* v14.3.4: sideways, the status line sits in the empty bottom-left corner instead of on P4's row */
+body.landscapeLayout #statusBar{
+  top:auto !important; bottom:calc(8px + env(safe-area-inset-bottom)) !important;
+  left:calc(8px + env(safe-area-inset-left)) !important; transform:none !important;
+  max-width:24% !important; white-space:normal !important; text-align:left; font-size:12px;
+}

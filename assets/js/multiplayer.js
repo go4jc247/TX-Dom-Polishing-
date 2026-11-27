@@ -10,7 +10,7 @@ function mpPlayerCount(){ return GAME_MODE === 'MOON' ? 3 : (GAME_MODE === 'T42'
 function mpMaxPip(){ return GAME_MODE === 'T42' || GAME_MODE === 'MOON' ? 6 : 7; }
 function mpHandSize(){ return GAME_MODE === 'T42' || GAME_MODE === 'MOON' ? 7 : 6; }
 const MP_WS_URL = 'wss://tn51-tx42-relay.onrender.com';  // V10_122: PRODUCTION
-const MP_VERSION = 'v14.3.3';  // v14.3.3: sideways: rows almost touching, big centre tiles, markers outside
+const MP_VERSION = 'v14.3.4';  // v14.3.4: sideways TN51 redesigned around a big hand
 
 // ═══════════════════════════════════════════════════════════════
 // V10_FIX: Multiplayer Sync Fix Variables
