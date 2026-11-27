@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.4.1 — Keep text out of the iOS status-bar blur band
+// Version: v14.4.2 — Bottom strip on iPhone blends into the table
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.4.1';
+const CACHE_NAME = 'tx-dom-v14.4.2';
 const urlsToCache = [
   './index.html',
   './sw.js',
