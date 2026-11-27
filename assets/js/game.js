@@ -960,9 +960,80 @@ function showLayDownDialog() {
   showLayDownReveal(layDownState, false);
 }
 
+// v14.4.0: sideways, P4's row runs off the top of the screen. Whenever hands are shown face-up
+// (end of a round, or P4 laying down a hand) P4's row and tag slide down until the whole row is
+// on screen; they go back at the next deal.
+var _p4Shift = 0;
+function _p4RevealShift(on){
+  if(GAME_MODE !== 'TN51' || !document.body.classList.contains('landscapeLayout')) on = false;
+  var seat = -1;
+  for(var s0 = 0; s0 < 6; s0++) if(seatToPlayer(s0) === 4) seat = s0;
+  var dy = 0;
+  if(on && seat >= 0 && sprites[seat]){
+    var topMin = 4 + (_getSafeInsets().t || 0);
+    sprites[seat].forEach(function(d){
+      if(!d || !d.sprite) return;
+      var p = d.sprite.getPose();
+      dy = Math.max(dy, topMin - (p.y + 56 - 56 * p.s));
+    });
+  }
+  if(seat >= 0 && sprites[seat]) sprites[seat].forEach(function(d){
+    if(!d || !d.sprite) return;
+    var sp = d.sprite, p = sp.getPose();
+    var want = on ? dy : 0, cur = sp._p4dy || 0;
+    if(Math.abs(want - cur) > 0.5){ animateSprite(sp, Object.assign({}, p, { y: p.y + want - cur }), 350); }
+    sp._p4dy = want;
+  });
+  _p4Shift = on ? dy : 0;
+  document.body.style.setProperty('--p4Shift', _p4Shift + 'px');
+  document.body.classList.toggle('p4Down', _p4Shift > 0);
+}
+
+// v14.4.0: end-of-round, game-over and lay-down boxes go in the open middle of the table
+// (inside the players' tags), shrunk to fit if needed, so revealed hands and the trick history
+// stay visible. Upright and on other tables they stay where they were.
+function _openCenterRect(){
+  if(GAME_MODE !== 'TN51' || !document.body.classList.contains('landscapeLayout')) return null;
+  var S = TN51_SETTINGS, r = getRect(), W = r.width, H = r.height, TW = 54, TH = 30, G = 8;
+  if(S.ind2x === undefined) return null;
+  var left = Math.max(S.ind2x, S.ind3x) * W + TW / 2 + G;
+  var right = Math.min(S.ind5x, S.ind6x) * W - TW / 2 - G;
+  var top = S.ind4y * H + TH / 2 + G + _p4Shift;
+  var bottom = S.ind1y * H - TH / 2 - G;
+  if(right - left < 120 || bottom - top < 100) return null;
+  return { left: left, top: top, width: right - left, height: bottom - top };
+}
+function _fitOverlayToOpen(overlay, panel){
+  if(!overlay) return;
+  panel = panel || overlay.firstElementChild;
+  var R = _openCenterRect();
+  if(!R){ delete overlay.dataset.openFit; return; }
+  overlay.dataset.openFit = '1';
+  var st = overlay.style;
+  st.setProperty('position', 'absolute', 'important');
+  st.setProperty('left', R.left + 'px', 'important'); st.setProperty('top', R.top + 'px', 'important');
+  st.setProperty('width', R.width + 'px', 'important'); st.setProperty('height', R.height + 'px', 'important');
+  st.setProperty('right', 'auto', 'important'); st.setProperty('bottom', 'auto', 'important');
+  st.setProperty('padding', '0', 'important'); st.setProperty('align-items', 'center', 'important');
+  st.setProperty('justify-content', 'center', 'important'); st.setProperty('background', 'transparent', 'important');
+  if(!panel) return;
+  panel.style.removeProperty('transform');
+  panel.style.setProperty('max-width', 'none', 'important');
+  panel.style.setProperty('position', 'absolute', 'important');
+  panel.style.setProperty('margin', '0', 'important');
+  var pw = panel.offsetWidth, ph = panel.offsetHeight;
+  var k = Math.min(1, R.width / Math.max(1, pw), R.height / Math.max(1, ph));
+  // exact centre of the open space (flex centring drifts when the box is taller than the space)
+  panel.style.setProperty('left', ((R.width - pw) / 2) + 'px', 'important');
+  panel.style.setProperty('top', ((R.height - ph) / 2) + 'px', 'important');
+  panel.style.transformOrigin = 'center center';
+  if(k < 1) panel.style.transform = 'scale(' + k.toFixed(3) + ')';
+}
+
 // v14.2.1: reveal (or put back) a lay-down hand using the sprites already on the table
 function revealLayDownOnTable(seat, reveal){
   if(typeof sprites === 'undefined' || !sprites[seat]) return;
+  if(seatToPlayer(seat) === 4) _p4RevealShift(reveal);
   var local = (seat === getLocalSeat());
   var LIFT = 18;
   sprites[seat].forEach(function(d){
@@ -1017,6 +1088,7 @@ function showLayDownReveal(result, isAI) {
   }
 
   backdrop.style.display = 'flex';
+  _fitOverlayToOpen(backdrop, panel);
 }
 
 function acceptLayDown() {
@@ -9087,6 +9159,7 @@ function flipRemainingDominoes(){
       }
     }
   }
+  _p4RevealShift(true);
 }
 
 function showHandEndPopup(){
@@ -10031,6 +10104,7 @@ async function aiPlayTurn(){
 }
 
 async function startNewHand(){
+  try { _p4RevealShift(false); } catch(e){}
   // ═══════════════════════════════════════════════════════════════
   // V10_FIX: Reset all sync fix flags for new hand
   // ═══════════════════════════════════════════════════════════════
@@ -10459,6 +10533,7 @@ function showGameEndSummary(){
       mpSendRematchInvite();
     });
   }
+  _fitOverlayToOpen(overlay);
 }
 
 function hideGameEndSummary(){
@@ -10555,6 +10630,7 @@ function showRoundEndSummary(){
       startNewHand();
     });
   }
+  _fitOverlayToOpen(overlay);
 }
 
 function hideRoundEndSummary(){
@@ -10634,11 +10710,15 @@ function renderBoneyardPanel(){
   var rect = getRect(), W = rect.width, H = rect.height;
   var ins = _getSafeInsets();
   var maxPip = session.game.max_pip, nCols = maxPip + 1, nRows = maxPip + 1;
-  var drawerW = Math.min(W * 0.5, 480);
-  var GX = 0.1, GY = 0.28, pad = 12, headH = 34;
-  var tw = (drawerW - ins.r - 2 * pad) / (nCols + (nCols - 1) * GX);
-  tw = Math.min(tw, (H - headH - 2 * pad - ins.b) / (nRows * 0.5 * (1 + GY)) );
-  var th = tw / 2;
+  // v14.4.0: the grid is turned 90 degrees: each suit is a column of upright dominoes
+  // (doubles in the first column), which suits the tall drawer better.
+  var pad = 10, headH = 58, GV = 0.08, GC = 0.3;
+  var nColsR = nRows, nPerCol = nCols;          // columns = suits, tiles per column
+  var Lh = (H - headH - 2 * pad - ins.t - ins.b) / (nPerCol + (nPerCol - 1) * GV);   // long side
+  var Lw = (W * 0.5 - 2 * pad - ins.r) / ((nColsR + (nColsR - 1) * GC) * 0.5);
+  var tL = Math.min(Lh, Lw, 90), tS = tL / 2;
+  var gridW = nColsR * tS + (nColsR - 1) * tS * GC;
+  var drawerW = Math.max(gridW + 2 * pad + ins.r, 250);
   host.style.cssText = 'position:absolute;z-index:5000;top:0;bottom:0;right:0;width:' + drawerW + 'px;' +
     'padding:' + (6 + ins.t) + 'px ' + (pad + ins.r) + 'px ' + pad + 'px ' + pad + 'px;box-sizing:border-box;';
   host.innerHTML = '';
@@ -10659,23 +10739,25 @@ function renderBoneyardPanel(){
   for(var d = maxPip; d >= 0; d--) rows[0].push([d, d]);
   for(var suit = maxPip; suit >= 1; suit--){ var r = []; for(var lo = suit - 1; lo >= 0; lo--) r.push([suit, lo]); rows.push(r); }
   var dpr = window.devicePixelRatio || 1;
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:flex;align-items:flex-start;justify-content:center;gap:' + (tS * GC) + 'px;';
   rows.forEach(function(row){
-    var line = document.createElement('div');
-    line.style.cssText = 'display:flex;gap:' + (tw * GX) + 'px;margin-bottom:' + (th * GY) + 'px;';
+    var col = document.createElement('div');
+    col.style.cssText = 'display:flex;flex-direction:column;gap:' + (tL * GV) + 'px;';
     row.forEach(function(t){
       var k = key(t);
       var cell = document.createElement('div');
       cell.className = 'byCell' + (played.has(k) ? ' played' : '') + (mine.has(k) ? ' mine' : '') +
         (session.game._is_trump_tile && session.game._is_trump_tile(t) ? ' trump' : '');
-      cell.style.cssText = 'width:' + tw + 'px;height:' + th + 'px;flex:0 0 auto;';
-      // Draw upright at full resolution, then lay it flat
-      var cvs = renderDominoCanvas(t, Math.round(th * dpr), Math.round(tw * dpr));
-      cvs.style.cssText = 'position:absolute;width:' + th + 'px;height:' + tw + 'px;left:' + ((tw - th) / 2) + 'px;top:' + ((th - tw) / 2) + 'px;transform:rotate(-90deg);border-radius:' + (th * 0.18) + 'px;';
+      cell.style.cssText = 'width:' + tS + 'px;height:' + tL + 'px;flex:0 0 auto;';
+      var cvs = renderDominoCanvas(t, Math.round(tS * dpr), Math.round(tL * dpr));
+      cvs.style.cssText = 'position:absolute;left:0;top:0;width:' + tS + 'px;height:' + tL + 'px;border-radius:' + (tS * 0.18) + 'px;';
       cell.appendChild(cvs);
-      line.appendChild(cell);
+      col.appendChild(cell);
     });
-    host.appendChild(line);
+    grid.appendChild(col);
   });
+  host.appendChild(grid);
   host.style.display = 'block';
 }
 function _hideBoneyardPanel(){ var h = document.getElementById('boneyardPanel'); if(h) h.style.display = 'none'; }

@@ -155,6 +155,7 @@
 
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
+        if(overlay.dataset.openFit === '1') return;   // v14.4.0: placed by _fitOverlayToOpen
         var availH = overlay.clientHeight * 0.7; // account for padding-top:25%
         var naturalH = inner.scrollHeight;
         if(naturalH <= availH || availH <= 0) return;

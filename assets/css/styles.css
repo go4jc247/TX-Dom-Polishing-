@@ -2011,3 +2011,10 @@ html.onHome body .settingsBtn{ left:calc(10px + env(safe-area-inset-left)) !impo
   #homeButtonsWrap #screenNameInput{ font-size:15px !important; }
 }
 html.onHome #gameWrapper{ width:100% !important; height:100% !important; }
+/* v14.4.0: P4's tag follows its row down when hands are revealed sideways */
+#playerIndicator4{ transition:margin-top .35s ease; }
+body.p4Down #playerIndicator4{ margin-top:var(--p4Shift, 0px); }
+/* v14.4.0: narrower boneyard drawer: title + Close on one line, the key underneath */
+#boneyardPanel .byHead{ flex-wrap:wrap; height:auto !important; row-gap:2px; margin-bottom:6px; }
+#boneyardPanel .byHead > span:first-child{ flex:1; }
+#boneyardPanel .byKey{ order:3; flex:1 1 100%; }
