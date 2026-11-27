@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.0 — landscape side panel for TN51 and Texas 42
+// Version: v14.3.1 — landscape: slim panel with upright trick history, true hexagon
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.0';
+const CACHE_NAME = 'tx-dom-v14.3.1';
 const urlsToCache = [
   './index.html',
   './sw.js',

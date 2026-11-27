@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.0'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.1'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2048,23 +2048,31 @@ function _getSafeInsets(){
 // v14.3.0: landscape side panel on the right: scores at the top (the score bar is restyled
 // into the panel by CSS), then the trick history, one trick per row.
 function _landscapePanel(W, H, m, nPlayers, S){
+  // v14.3.1: the upright trick-history grid turned 90 degrees: dominoes stand upright,
+  // one trick per row, same groupings, so the panel is a slim strip down the right side.
   var ins = _getSafeInsets();
-  var panelW = Math.max(190, Math.min(340, W * 0.28));
-  var panelX = W - panelW - ins.r;
+  var rect = getRect();
+  var pad = Math.max(5, Math.round(m * 0.8));
+  var GAPX = 0.12, GAPY = 0.06;
+  // First pass: a provisional width so the score boxes can be measured
+  var panelW = Math.max(150, Math.min(220, W * 0.17));
   document.body.style.setProperty('--sidePanelW', (panelW + ins.r) + 'px');
   var tb = document.getElementById('topbar');
-  var rect = getRect();
-  var scoresBottom = tb ? (tb.getBoundingClientRect().bottom - rect.top) : 80;
-  var pad = Math.max(6, m);
-  var thTop = scoresBottom + m;
-  var availH = H - thTop - ins.b - m;
-  var sth = Math.min((panelW - 2 * pad) / (nPlayers * 112 * 1.06), (availH - 2 * pad) / (8 * 56 * 1.3), 0.5);
-  var tileW = 112 * sth, tileH = 56 * sth;
-  var pitchX = (panelW - 2 * pad - tileW) / Math.max(1, nPlayers - 1);
-  var pitchY = Math.min(tileH * 1.6, (availH - 2 * pad - tileH) / 7);
+  var scoresBottom = tb ? (tb.getBoundingClientRect().bottom - rect.top) : 70;
+  var thTop = scoresBottom + Math.round(m / 2);
+  var availH = H - thTop - Math.max(ins.b, m);
+  var sth = Math.min((availH - 2 * pad) / (112 * (8 + 7 * GAPY)), (panelW - 2 * pad) / (56 * (nPlayers + (nPlayers - 1) * GAPX)), 0.5);
+  var tileW = 56 * sth, tileH = 112 * sth;
+  var pitchX = tileW * (1 + GAPX), pitchY = tileH * (1 + GAPY);
+  var gridW = tileW + (nPlayers - 1) * pitchX;
+  var panelX = W - panelW - ins.r;
+  // Rotated grid: tricks run top to bottom, players run right to left
+  var gridRight = panelX + (panelW + gridW) / 2 - tileW / 2;
   S.thTranspose = true; S.thScale = sth;
-  S.thBaseX = (panelX + pad + tileW / 2) / W; S.thColSpacing = pitchX / W;
-  S.thBaseY = (thTop + pad + tileH / 2) / H;  S.thRowSpacing = pitchY / H;
+  S.thBaseX = gridRight / W;                 S.thColSpacing = -pitchX / W;
+  S.thBaseY = (thTop + pad + tileH / 2) / H; S.thRowSpacing = pitchY / H;
+  var th = getSection('Trick_History');
+  if(th) th.dominoes.forEach(function(d){ d.rotZ = 0; });
   var bg = document.getElementById('trickHistoryBg');
   if(bg){
     bg.style.setProperty('--th-left', (panelX / W * 100) + '%');
@@ -2073,6 +2081,12 @@ function _landscapePanel(W, H, m, nPlayers, S){
     bg.style.setProperty('--th-height', '100%');
   }
   return { panelX: panelX, panelW: panelW, insets: ins };
+}
+
+// v14.3.1: upright trick history tiles lie flat (rotZ 270)
+function _trickHistoryFlat(){
+  var th = getSection('Trick_History');
+  if(th) th.dominoes.forEach(function(d){ d.rotZ = 270; });
 }
 
 function _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H){
@@ -2103,13 +2117,13 @@ function computeTn51AutoLayout(){
     var panel = _landscapePanel(W, H, m, 6, S);
     var topY = _layoutTopY(rect, ['statusBar']) + m;
     tabL = ins.l + m; tabR = panel.panelX - m;
-    s1 = Math.min((tabR - tabL) * 0.72 / (56 * (n + (n - 1) * GAP)), 0.24 * H / 112, 1.4);
+    s1 = Math.min((tabR - tabL) * 0.72 / (56 * (n + (n - 1) * GAP)), 0.21 * H / 112, 1.4);
     pitch1 = 56 * s1 * (1 + GAP);
     handCY = H - Math.max(ins.b, m) - 4 - 56 * s1; handTop = handCY - 56 * s1;
     handCX = (tabL + tabR) / 2;
     tabT = topY; tabB = handTop - m;
   } else {
-    S.thTranspose = false;
+    S.thTranspose = false; _trickHistoryFlat();
     document.body.style.removeProperty('--sidePanelW');
     var topY2 = _layoutTopY(rect) + m;
     var handW = W - 2 * m;
@@ -2140,21 +2154,11 @@ function computeTn51AutoLayout(){
     var side = Math.sqrt(rx * rx / 4 + ry * ry), top = rx;
     return Math.min(ROW_FILL * Math.min(side, top) / (56 * (6 + 5 * OPP_GAP)), 0.75);
   }
-  if(!landscape){
-    var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP));
-    var R = Math.min(availW / 2 / (1 + 56 * k + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
-    R = Math.max(R, 40); Rx = R; Ry = 0.866 * R;
-  } else {
-    Ry = availH / 2 * 0.86;
-    Rx = Math.min(availW / 2 * 0.9, Ry / 0.866 * 2.0);
-    for(var it = 0; it < 6; it++){       // shrink until the rows fit inside the table area
-      var sT = tileScaleFor(Rx, Ry), dd = 112 * sT;
-      var needH = Ry + dd / 2 + 4, needW = Rx + dd / 2 + 4;
-      var f = Math.min(1, (availH / 2) / needH, (availW / 2) / needW);
-      if(f >= 0.999) break;
-      Rx *= f; Ry *= f;
-    }
-  }
+  // v14.3.1: always a true hexagon (60-degree sides), built out from the centre at the
+  // largest size that fits, in both orientations. Never stretched.
+  var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP));
+  var R = Math.min(availW / 2 / (1 + 56 * k + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
+  R = Math.max(R, 40); Rx = R; Ry = 0.866 * R;
   sOpp = tileScaleFor(Rx, Ry);
   var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
 
@@ -2632,13 +2636,13 @@ function computeT42AutoLayout(){
     // v14.3.0: right panel for scores + trick history; table uses the full height
     var panel = _landscapePanel(W, H, m, 4, S);
     tabL = ins.l + m; tabR = panel.panelX - m;
-    s1 = Math.min((tabR - tabL) * 0.8 / (56 * (n + (n - 1) * GAP)), 0.24 * H / 112, 1.4);
+    s1 = Math.min((tabR - tabL) * 0.8 / (56 * (n + (n - 1) * GAP)), 0.21 * H / 112, 1.4);
     pitch1 = 56 * s1 * (1 + GAP);
     handCY = H - Math.max(ins.b, m) - 4 - 56 * s1; handTop = handCY - 56 * s1;
     handCX = (tabL + tabR) / 2;
     tabT = _layoutTopY(rect, ['statusBar']) + m; tabB = handTop - m;
   } else {
-    S.thTranspose = false;
+    S.thTranspose = false; _trickHistoryFlat();
     document.body.style.removeProperty('--sidePanelW');
     var topY = _layoutTopY(rect) + m;
     s1 = Math.min((W - 2 * m) / (56 * (n + (n - 1) * GAP)), 0.22 * H / 112, 1.6);

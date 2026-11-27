@@ -1841,3 +1841,13 @@ body.landscapeLayout .trumpDisplaySquare{ --trump-display-top: calc(44px + env(s
 body.landscapeLayout #boneyard2Toggle{ right:calc(var(--sidePanelW, 28%) + 4px) !important; }
 body.landscapeLayout #trickHistoryBg{ border-radius:0; background:rgba(0,0,0,0.28); }
 body.landscapeLayout #bidBackdrop, body.landscapeLayout #trumpBackdrop{ padding-top:calc(8px + env(safe-area-inset-top)) !important; padding-right:var(--sidePanelW, 28%); }
+
+/* v14.3.1: slim landscape panel — compact scores so the upright trick history gets the height */
+body.landscapeLayout #topbar{ padding: calc(3px + env(safe-area-inset-top)) calc(4px + env(safe-area-inset-right)) 2px 4px !important; }
+body.landscapeLayout #topRow{ gap:3px; }
+body.landscapeLayout #topbar .pill{ padding:2px 6px; border-radius:8px; }
+body.landscapeLayout #topbar .scoreLabel{ font-size:9px; }
+body.landscapeLayout #topbar .scoreValue{ font-size:15px; }
+body.landscapeLayout #topbar .scoreBar{ height:2px; margin-top:2px; }
+body.landscapeLayout #topbar .marksLabel{ font-size:8px; margin-bottom:0; }
+body.landscapeLayout #topbar .tallyCanvas{ height:14px; }
