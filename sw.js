@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.5.3 — Remove test markers; re-check the clock height after launch
+// Version: v14.5.4 — Bold marks pushed to the outside; trump square top-left
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.5.3';
+const CACHE_NAME = 'tx-dom-v14.5.4';
 const urlsToCache = [
   './index.html',
   './sw.js',

@@ -2100,3 +2100,7 @@ html, body{ height:100% !important; height:100lvh !important; overflow:hidden !i
 #startScreenBackdrop{ position:absolute !important; top:0 !important; left:0 !important; right:0 !important;
   bottom:auto !important; height:100vh !important; height:100lvh !important; }
 #gameSelectScreen{ position:absolute !important; height:100vh !important; height:100lvh !important; }
+/* v14.5.4: each team's marks fill half the Marks box, pushed to the outside edges */
+#topbar .marksDisplay{ display:flex !important; width:100%; justify-content:space-between !important; gap:6px !important; }
+#topbar .tallyGroup{ flex:1 1 0; min-width:0; display:flex; }
+#topbar .tallyCanvas{ width:100% !important; max-width:none !important; display:block; }

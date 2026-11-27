@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.5.3'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.5.4'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2391,6 +2391,9 @@ function computeTn51AutoLayout(){
 
   // Tags and played tiles in front of each row (nothing on the bottom edge upright)
   var sPlayP = _tn51TagsAndPlays(S, W, H, cx, cy, Rx / 2, Rx, Ry, 112 * sOpp, sOpp, Ry, 22, 44, true, { handTopRel: handTop - cy });
+  // v14.5.4: upright, the trump marker sits in the empty top-left corner of the table, just under
+  // the score bar (owner's pick), instead of beside your tag
+  _trumpSpot = { left: tabL + 4, top: tabT + 4 };
   _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: false, R: R, sOpp: sOpp, s1: s1, cx: cx, cy: cy };
   return _tn51LastGeom;
 }
@@ -5278,122 +5281,59 @@ let PLAY_ORDER = [1, 2, 3, 4, 5, 6];
 // Draw tally marks on a canvas (max 15 marks = 3 groups of 5)
 // Hand-drawn style with slight variations - RIGHT ALIGNED
 // Groups fill from right to left, but lines within each group draw left-to-right
-function drawTallyMarks(canvas, count, teamColor){
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if(count <= 0) return;
-
-  // If count > 15, increase canvas height for extra rows
+// v14.5.4: bold, crisp tally marks (drawn at the screen's pixel density), each team's marks
+// pushed to the outside of the Marks box: Team 1 from the left edge, Team 2 from the right edge.
+function drawTallyMarks(canvas, count, teamColor, align){
+  align = align || 'right';
+  const dpr = window.devicePixelRatio || 1;
+  const land = document.body.classList.contains('landscapeLayout');
+  const rowH = land ? 18 : 26;                       // CSS px per row of marks
   const rowCapacity = 15;
-  const numRows = Math.ceil(count / rowCapacity);
-  const rowH = 24;  // height per row
-  const totalH = numRows * rowH;
-  if(canvas.height !== totalH){
-    canvas.height = totalH;
-    canvas.style.height = totalH + 'px';
+  const numRows = Math.max(1, Math.ceil(count / rowCapacity));
+  const cssW = Math.max(40, Math.round(canvas.clientWidth || canvas.parentElement && canvas.parentElement.clientWidth || 80));
+  const cssH = numRows * rowH;
+  canvas.style.height = cssH + 'px';
+  if(canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)){
+    canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
   }
-  const h = rowH;  // each row is this tall
-
-  // Draw each row
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+  if(count <= 0) return;
   for(let row = 0; row < numRows; row++){
     const rowCount = (row < numRows - 1) ? rowCapacity : (count - row * rowCapacity);
-    const yOffset = row * rowH;
-    _drawTallyRow(ctx, w, h, yOffset, rowCount, teamColor);
+    _drawTallyRow(ctx, cssW, rowH, row * rowH, rowCount, teamColor, align);
   }
 }
 
-function _drawTallyRow(ctx, w, h, yOffset, count, teamColor){
-  // Tally mark dimensions
-  const lineHeight = h * 0.75;
-  const lineWidth = 2;
-  const gapBetweenLines = 5;  // Gap between vertical lines within a group
-  const groupGap = 8;  // Gap between groups of 5
-
-  ctx.strokeStyle = teamColor;
-  ctx.lineCap = 'round';
-  ctx.lineWidth = lineWidth;
-
-  // Calculate how many complete groups of 5 and remaining
-  const completeGroups = Math.floor(count / 5);
-  const remainder = count % 5;
-
-  // Calculate total width needed
-  // Each complete group: 4 lines * gapBetweenLines = 20px (the 5th is a diagonal)
-  // Remainder: remainder * gapBetweenLines
-  // Group gaps: completeGroups * groupGap (if there's also a remainder)
-  const completeGroupWidth = 4 * gapBetweenLines;  // Width of 4 vertical lines
-  const remainderWidth = remainder > 0 ? remainder * gapBetweenLines : 0;
-  const totalGroupGaps = (completeGroups > 0 && remainder > 0) ? groupGap : 0;
-  const betweenCompleteGroupGaps = (completeGroups > 1) ? (completeGroups - 1) * groupGap : 0;
-
-  const totalWidth = (completeGroups * completeGroupWidth) + remainderWidth + totalGroupGaps + betweenCompleteGroupGaps;
-
-  // Start from right edge, work backwards
-  let x = w - 2;  // Starting x position (right edge with padding)
-
-  // Draw the incomplete group first (rightmost, these are the most recent marks)
-  if(remainder > 0){
-    // Draw remainder lines from right to left, but facing normal direction
-    for(let line = remainder - 1; line >= 0; line--){
-      const jitterX = (Math.random() - 0.5) * 1;
-      const jitterY1 = (Math.random() - 0.5) * 1.5;
-      const jitterY2 = (Math.random() - 0.5) * 1.5;
-      const jitterAngle = (Math.random() - 0.5) * 0.08;
-
-      ctx.save();
-      ctx.translate(x + jitterX, yOffset + h / 2);
-      ctx.rotate(jitterAngle);
-      ctx.beginPath();
-      ctx.moveTo(0, -lineHeight / 2 + jitterY1);
-      ctx.lineTo(0, lineHeight / 2 + jitterY2);
-      ctx.stroke();
-      ctx.restore();
-
-      x -= gapBetweenLines;
-    }
-
-    if(completeGroups > 0) x -= groupGap;  // Gap before complete groups
+function _drawTallyRow(ctx, w, h, yOffset, count, teamColor, align){
+  const lineHeight = h * 0.8;
+  const lineWidth = h >= 24 ? 3.6 : 2.8;
+  const gap = h >= 24 ? 7 : 5.5;          // between strokes in a group
+  const groupGap = h >= 24 ? 11 : 8;      // between groups of five
+  const groups = Math.floor(count / 5), rem = count % 5;
+  // total width, so the marks can sit against either edge
+  const total = groups * 4 * gap + rem * gap + Math.max(0, groups - 1 + (groups && rem ? 1 : 0)) * groupGap;
+  const pad = 3;
+  // strokes are laid out left to right, oldest first
+  let x = (align === 'left') ? pad + lineWidth / 2 : (w - pad - lineWidth / 2 - Math.max(0, total - gap));
+  const cy = yOffset + h / 2;
+  function stroke(x1, y1, x2, y2){
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = lineWidth + 2;  // dark outline for contrast
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.strokeStyle = teamColor; ctx.lineWidth = lineWidth;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
   }
-
-  // Draw complete groups (from right to left - newest to oldest)
-  for(let g = 0; g < completeGroups; g++){
-    // Draw the group from right to left
-    // Position for rightmost (4th) line
-    const groupEndX = x;
-
-    // Draw 4 vertical lines from right to left
-    for(let line = 3; line >= 0; line--){
-      const jitterX = (Math.random() - 0.5) * 1;
-      const jitterY1 = (Math.random() - 0.5) * 1.5;
-      const jitterY2 = (Math.random() - 0.5) * 1.5;
-      const jitterAngle = (Math.random() - 0.5) * 0.08;
-
-      ctx.save();
-      ctx.translate(x + jitterX, yOffset + h / 2);
-      ctx.rotate(jitterAngle);
-      ctx.beginPath();
-      ctx.moveTo(0, -lineHeight / 2 + jitterY1);
-      ctx.lineTo(0, lineHeight / 2 + jitterY2);
-      ctx.stroke();
-      ctx.restore();
-
-      x -= gapBetweenLines;
-    }
-
-    const groupStartX = x + gapBetweenLines;  // Left edge of group
-
-    // Draw diagonal slash through the 4 lines (from bottom-left to top-right)
-    const jitterY1 = (Math.random() - 0.5) * 1.5;
-    const jitterY2 = (Math.random() - 0.5) * 1.5;
-    ctx.beginPath();
-    ctx.moveTo(groupStartX - 1, yOffset + h / 2 + lineHeight / 2 - 2 + jitterY1);
-    ctx.lineTo(groupEndX + 1, yOffset + h / 2 - lineHeight / 2 + 2 + jitterY2);
-    ctx.stroke();
-
-    if(g < completeGroups - 1) x -= groupGap;  // Gap before next group
+  function jit(v){ return (Math.random() - 0.5) * v; }
+  for(let g = 0; g < groups; g++){
+    const startX = x;
+    for(let i = 0; i < 4; i++){ const xx = x + jit(0.8); stroke(xx, cy - lineHeight / 2 + jit(1.2), xx + jit(0.8), cy + lineHeight / 2 + jit(1.2)); x += gap; }
+    const endX = x - gap;
+    stroke(startX - 2, cy + lineHeight / 2 - 2, endX + 2, cy - lineHeight / 2 + 2);   // the fifth, across
+    x += groupGap - gap;
   }
+  for(let i = 0; i < rem; i++){ const xx = x + jit(0.8); stroke(xx, cy - lineHeight / 2 + jit(1.2), xx + jit(0.8), cy + lineHeight / 2 + jit(1.2)); x += gap; }
 }
 
 // Update the score display
@@ -5444,9 +5384,11 @@ function updateScoreDisplay(){
   // Update tally marks
   const canvas1 = document.getElementById('tallyCanvas1');
   const canvas2 = document.getElementById('tallyCanvas2');
-  drawTallyMarks(canvas1, team1Marks, 'rgba(59,130,246,0.9)');  // Blue for team 1
-  drawTallyMarks(canvas2, team2Marks, 'rgba(239,68,68,0.9)');   // Red for team 2
+  drawTallyMarks(canvas1, team1Marks, '#60a5fa', 'left');   // Team 1 (blue) from the left edge
+  drawTallyMarks(canvas2, team2Marks, '#f87171', 'right');  // Team 2 (red) from the right edge
 }
+// v14.5.4: marks are sized to their box, so redraw them when the layout changes
+window.addEventListener('resize', function(){ clearTimeout(window._marksRedraw); window._marksRedraw = setTimeout(function(){ try { updateScoreDisplay(); } catch(e){} }, 450); });
 
 // ── Moon Widow Swap ──
 // Helper: render a domino tile as a canvas image
