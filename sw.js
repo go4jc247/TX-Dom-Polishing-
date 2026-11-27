@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.2 — sideways: equal-size dominoes, bigger hexagon
+// Version: v14.3.3 — sideways: rows almost touching, big centre tiles, markers outside
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.2';
+const CACHE_NAME = 'tx-dom-v14.3.3';
 const urlsToCache = [
   './index.html',
   './sw.js',

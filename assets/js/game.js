@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.2'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.3'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2156,15 +2156,20 @@ function computeTn51AutoLayout(){
   }
   // v14.3.1: always a true hexagon (60-degree sides), built out from the centre at the
   // largest size that fits, in both orientations. Never stretched.
+  var equalSize = landscape;
+  if(landscape){
+    // v14.3.3: rows almost meet their neighbours. End tiles stop just short of the corner:
+    // a tile w wide and 2w deep clears the next row when its centre is ~1.1w from the corner.
+    OPP_GAP = 0.06;
+    ROW_FILL = (5 * (1 + OPP_GAP) + 1) / (5 * (1 + OPP_GAP) + 2.25);
+  }
   var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP));
   var R = Math.min(availW / 2 / (1 + 56 * k + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
-  var equalSize = false;
   if(landscape){
     // v14.3.2: sideways, everyone's dominoes are the same size and your hand sits on the
     // bottom edge of the hexagon like everyone else's. The hexagon is as big as the height
     // allows: your row must be fully on screen, the row across from you may run off the top.
-    equalSize = true;
-    var dK = 112 * k, bp = Math.max(ins.b, m) + 4, CUT = 0.45;
+    var dK = 112 * k, bp = Math.max(ins.b, m) + 4, CUT = 0.6;
     R = Math.min((H - bp) / (1.732 + dK * (1 - CUT)), (tabR - tabL) / 2 / (1 + dK / 2));
     cx = (tabL + tabR) / 2;
     cy = H - bp - R * (0.866 + dK / 2);
@@ -2222,9 +2227,31 @@ function computeTn51AutoLayout(){
     S['ind' + q + 'x'] = (cx + marks[q][0] * Rx) / W;     S['ind' + q + 'y'] = (cy + marks[q][1] * Ryn) / H;
   }
   S.trickScale = sOpp; S.leadScale = sOpp; S.leadX = cx / W; S.leadY = cy / H;
-  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sOpp);
-  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sOpp);
-  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sOpp / 0.393);
+  var sPlay = sOpp;
+  if(equalSize){
+    // v14.3.3 sideways: played tiles as big as the open middle allows, packed tight around the
+    // lead square: P2/P3 on the left, P5/P6 on the right, P4 above, P1 below.
+    var ai = 0.866 * R - 56 * sOpp - 6;        // centre to the inner face of each row
+    var g = 4;
+    // Largest size whose outer corners stay inside every row's inner face (checked against the
+    // slanted rows for P2/P3/P5/P6 and the top/bottom rows for P4/P1)
+    sPlay = Math.max(sOpp, Math.min((ai - 6 - 0.866 * g - 0.25 * g) / 149.2, (ai - 6 - g) / 112, 0.9));
+    var cTopY = 28 * sPlay + g / 2, side = 84 * sPlay + g, vert = 84 * sPlay + g;
+    var pos = { 1: [0, vert], 4: [0, -vert], 2: [-side, cTopY], 3: [-side, -cTopY], 5: [side, -cTopY], 6: [side, cTopY] };
+    for(var q2 = 1; q2 <= 6; q2++){ S['p' + q2 + 'TrickX'] = (cx + pos[q2][0]) / W; S['p' + q2 + 'TrickY'] = (cy + pos[q2][1]) / H; }
+    S.trickScale = sPlay; S.leadScale = sPlay;
+    // Player markers move outside the table, just beyond each row
+    var mr = 16, outD = 0.866 * R + 56 * sOpp + mr + 6;
+    var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
+    for(var q3 in nrm){ S['ind' + q3 + 'x'] = (cx + nrm[q3][0] * outD) / W; S['ind' + q3 + 'y'] = (cy + nrm[q3][1] * outD) / H; }
+    var rowHalf = 2.5 * 56 * sOpp * (1 + OPP_GAP) + 28 * sOpp;
+    // P4 (row may run off the top) and P1 (row at the bottom): marker beside the left end of the row
+    S.ind4x = (cx - rowHalf - mr - 8) / W; S.ind4y = Math.max(mr + 4, cy - 0.866 * R) / H;
+    S.ind1x = (cx - rowHalf - mr - 8) / W; S.ind1y = (cy + 0.866 * R) / H;
+  }
+  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
+  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
+  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sPlay / 0.393);
 
   _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: landscape, Rx: Rx, Ry: Ry, sOpp: sOpp, s1: s1, cx: cx, cy: cy };
   return _tn51LastGeom;
