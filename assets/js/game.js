@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.1'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.2'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2158,8 +2158,24 @@ function computeTn51AutoLayout(){
   // largest size that fits, in both orientations. Never stretched.
   var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP));
   var R = Math.min(availW / 2 / (1 + 56 * k + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
+  var equalSize = false;
+  if(landscape){
+    // v14.3.2: sideways, everyone's dominoes are the same size and your hand sits on the
+    // bottom edge of the hexagon like everyone else's. The hexagon is as big as the height
+    // allows: your row must be fully on screen, the row across from you may run off the top.
+    equalSize = true;
+    var dK = 112 * k, bp = Math.max(ins.b, m) + 4, CUT = 0.45;
+    R = Math.min((H - bp) / (1.732 + dK * (1 - CUT)), (tabR - tabL) / 2 / (1 + dK / 2));
+    cx = (tabL + tabR) / 2;
+    cy = H - bp - R * (0.866 + dK / 2);
+  }
   R = Math.max(R, 40); Rx = R; Ry = 0.866 * R;
   sOpp = tileScaleFor(Rx, Ry);
+  if(equalSize){
+    // Your row: same size as the others, upright, along the bottom edge
+    s1 = sOpp; pitch1 = 56 * s1 * (1 + OPP_GAP);
+    handCX = cx; handCY = cy + Ry;
+  }
   var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
 
   var V = { R: [Rx, 0], LR: [Rx / 2, Ry], LL: [-Rx / 2, Ry], L: [-Rx, 0], UL: [-Rx / 2, -Ry], UR: [Rx / 2, -Ry] };

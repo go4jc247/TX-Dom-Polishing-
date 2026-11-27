@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.1 — landscape: slim panel with upright trick history, true hexagon
+// Version: v14.3.2 — sideways: equal-size dominoes, bigger hexagon
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.1';
+const CACHE_NAME = 'tx-dom-v14.3.2';
 const urlsToCache = [
   './index.html',
   './sw.js',
