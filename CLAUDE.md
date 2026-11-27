@@ -204,6 +204,16 @@ function _lazyLoad(src, cb) {
      but still let the simulation run
    - Today it only runs when you won the bid and are leading trick 1
    - Keep it an advanced option, not for everyday play
+4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
+   reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
+   so each domino stays one continuous sprite (hand -> played -> trick history).
+   - Stage 1: quick fixes. Rotation leaves gaps (refreshLayout uses original deal slots, should
+     recenter); popups never taller than the screen, scrolling body, buttons pinned at bottom
+   - Stage 2: new layout engine, TN51 FIRST (owner's call: hex table, 60-degree seats are the
+     hardest and what breaks). Behind a "New layout (beta)" switch; old tables kept as fallback
+   - Stage 3: T42 and Moon, then landscape
+   - Stage 4: slim top bar (Team 1 | marks | Team 2) + Menu button replacing the gear
+   - Stage 5: lay-down / show hands using the tiles on the table (lift + glow yours, flip others)
 5. On hold: multiplayer and observer testing (brother may take multiplayer later)
 6. Later / optional: tutorial redo, physics shuffle as an optional extra, Pure 42 mode,
    3D table as a separate interface
