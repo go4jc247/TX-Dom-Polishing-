@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.2.1'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.2.2'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2070,11 +2070,13 @@ function computeTn51AutoLayout(){
   if(landscape){ tabL = thLeft + thBoxW + m; tabR = W - m; tabT = topY; tabB = handTop - m; }
   else { tabL = m; tabR = W - m; tabT = thTop + thBoxH + m; tabB = handTop - m; }
   var availW = tabR - tabL, availH = tabB - tabT;
-  var k = 0.95 / (6 * 56 * 1.08);           // opponent tile scale per unit of hex radius
+  // v14.2.2: rows use ~80% of their edge with clear gaps, so neighbouring rows never meet at the corners
+  var ROW_FILL = 0.80, OPP_GAP = 0.15;
+  var k = ROW_FILL / (56 * (6 + 5 * OPP_GAP)); // opponent tile scale per unit of hex radius
   var R = Math.min(availW / 2 / (1 + 56 * k * 1.0 + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
   R = Math.max(R, 40);
   var sOpp = Math.min(R * k, 0.75);
-  var pitchOpp = 56 * sOpp * 1.08;
+  var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
   var cx = (tabL + tabR) / 2, cy = (tabT + tabB) / 2;
   var a = 0.866 * R;                        // centre to the middle of each edge
 
@@ -2105,8 +2107,10 @@ function computeTn51AutoLayout(){
   S.p1x = (handCX + (n - 1) / 2 * pitch1) / W; S.p1y = handCY / H;
 
   // Played tiles, lead square and player markers, all relative to the hexagon
-  var played = { 1: [0, 0.40], 2: [-0.27, 0.20], 3: [-0.27, -0.20], 4: [0, -0.40], 5: [0.27, -0.20], 6: [0.27, 0.20] };
-  var marks  = { 1: [0, 0.60], 2: [-0.52, 0.38], 3: [-0.52, -0.38], 4: [0, -0.62], 5: [0.52, -0.38], 6: [0.52, 0.38] };
+  // v14.2.2: spread the middle out so bid labels, played tiles and the lead square don't touch
+  var played = { 1: [0, 0.46], 2: [-0.34, 0.20], 3: [-0.34, -0.20], 4: [0, -0.46], 5: [0.34, -0.20], 6: [0.34, 0.20] };
+  // markers sit on the line from the centre to each player's row, between the played spot and the row
+  var marks  = { 1: [0, 0.64], 2: [-0.554, 0.32], 3: [-0.554, -0.32], 4: [0, -0.64], 5: [0.554, -0.32], 6: [0.554, 0.32] };
   for(var q = 1; q <= 6; q++){
     S['p' + q + 'TrickX'] = (cx + played[q][0] * R) / W; S['p' + q + 'TrickY'] = (cy + played[q][1] * R) / H;
     S['ind' + q + 'x'] = (cx + marks[q][0] * R) / W;     S['ind' + q + 'y'] = (cy + marks[q][1] * R) / H;
@@ -6726,6 +6730,9 @@ function createPlaceholders(){
     const text = document.createElement('span');
     text.className = 'text';
     text.textContent = '';  // Will be set during bidding
+    // v14.2.2: label text sized to its box so "PASS" never spills onto its neighbours
+    text.style.fontSize = Math.max(8, Math.min(13, Math.round(_phH * 0.5))) + 'px';
+    text.style.letterSpacing = '0.5px';
     el.appendChild(text);
 
     tableMain.appendChild(el);

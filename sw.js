@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.2.1 — lay-down shown with the dominoes on the table
+// Version: v14.2.2 — TN51 rows no longer overlap at the corners; roomier middle
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.2.1';
+const CACHE_NAME = 'tx-dom-v14.2.2';
 const urlsToCache = [
   './index.html',
   './sw.js',
