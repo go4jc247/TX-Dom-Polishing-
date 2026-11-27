@@ -247,7 +247,7 @@
   #topbar{
     position:absolute;
     top:0; left:0; right:0;
-    padding: calc(6px + env(safe-area-inset-top)) 10px 6px 10px;
+    padding: calc(6px + var(--sbTop)) 10px 6px 10px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.10));
     border-bottom: 1px solid rgba(255,255,255,0.12);
     z-index:100;
@@ -1345,7 +1345,7 @@
   .trumpDisplaySquare{
     position:fixed;
     /* TRUMP DISPLAY POSITION CONTROLS - adjust these values to move the indicator */
-    --trump-display-top: calc(70px + env(safe-area-inset-top));
+    --trump-display-top: calc(70px + var(--sbTop));
     --trump-display-left: 10px;
     top: var(--trump-display-top);
     left: var(--trump-display-left);
@@ -1378,7 +1378,7 @@
   /* ==== Settings Menu ==== */
   .settingsBtn{
     position:fixed;
-    top:calc(80px + env(safe-area-inset-top));
+    top:calc(80px + var(--sbTop));
     right:10px;
     width:36px;
     height:36px;
@@ -1397,7 +1397,7 @@
 
   .settingsMenu{
     position:fixed;
-    top:calc(50px + env(safe-area-inset-top));
+    top:calc(50px + var(--sbTop));
     right:10px;
     background:rgba(0,0,0,0.85);
     border:1px solid rgba(255,255,255,0.2);
@@ -1759,7 +1759,7 @@
    so the Bid / OK buttons are always visible and tappable. */
 .modalPanel{
   display:flex; flex-direction:column;
-  max-height:calc(100% - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-height:calc(100% - 16px - var(--sbTop) - env(safe-area-inset-bottom));
 }
 .modalPanel > .modalHeader, .modalPanel > .modalFooter{ flex:0 0 auto; }
 .modalPanel > .modalBody{
@@ -1779,7 +1779,7 @@ body.landscapeLayout #bidBackdrop .modalPanel, body.landscapeLayout #trumpBackdr
    One row, same style for every piece, so it reads as one bar.
    ============================================================ */
 #topbar{
-  padding: calc(4px + env(safe-area-inset-top)) 86px 4px 8px !important;
+  padding: calc(4px + var(--sbTop)) 86px 4px 8px !important;
   background: linear-gradient(to bottom, rgba(0,0,0,0.38), rgba(0,0,0,0.18));
 }
 #topRow{ gap:6px; align-items:stretch; }
@@ -1793,24 +1793,24 @@ body.landscapeLayout #bidBackdrop .modalPanel, body.landscapeLayout #trumpBackdr
 #topbar .marksDisplay{ gap:10px; }
 #topbar .tallyCanvas{ height:18px; width:auto; max-width:100%; }
 .settingsBtn{
-  top:calc(4px + env(safe-area-inset-top)) !important; right:8px !important;
+  top:calc(4px + var(--sbTop)) !important; right:8px !important;
   width:auto !important; height:auto !important; min-height:40px; padding:0 10px !important;
   border-radius:10px !important; gap:5px;
   background:rgba(0,0,0,0.22) !important; border:1px solid rgba(255,255,255,0.14) !important;
   color:rgba(255,255,255,0.9) !important; font-weight:800; font-size:13px !important;
 }
 .settingsBtn .menuIcon{ font-size:16px; line-height:1; }
-.settingsMenu{ top:calc(50px + env(safe-area-inset-top)) !important; right:8px !important; }
-#statusBar{ top:calc(54px + env(safe-area-inset-top)) !important; font-size:13px; max-width:calc(100% - 110px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.trumpDisplaySquare{ --trump-display-top: calc(52px + env(safe-area-inset-top)); --trump-display-left: 8px; width:34px !important; height:34px !important; }
+.settingsMenu{ top:calc(50px + var(--sbTop)) !important; right:8px !important; }
+#statusBar{ top:calc(54px + var(--sbTop)) !important; font-size:13px; max-width:calc(100% - 110px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.trumpDisplaySquare{ --trump-display-top: calc(52px + var(--sbTop)); --trump-display-left: 8px; width:34px !important; height:34px !important; }
 
 /* v14.2.0: bid and trump boxes open just under the top bar, never over the scores or Menu */
-#bidBackdrop, #trumpBackdrop{ padding-top:calc(50px + env(safe-area-inset-top)) !important; align-items:flex-start !important; }
+#bidBackdrop, #trumpBackdrop{ padding-top:calc(50px + var(--sbTop)) !important; align-items:flex-start !important; }
 
 /* v14.2.1: lay-down uses the dominoes on the table. The message sits under the top bar
    and leaves the table visible; the revealed tiles glow. */
 #layDownBackdrop{ background:transparent !important; align-items:flex-start !important;
-  padding-top:calc(54px + env(safe-area-inset-top)); pointer-events:none; }
+  padding-top:calc(54px + var(--sbTop)); pointer-events:none; }
 #layDownPanel{ pointer-events:auto; padding:12px 16px !important; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
 #layDownTiles{ display:none; }
 .dominoSprite.layDownGlow{ filter: drop-shadow(0 0 6px rgba(255,213,74,0.95)) drop-shadow(0 0 2px rgba(255,213,74,0.95)); }
@@ -1821,7 +1821,7 @@ body.landscapeLayout #bidBackdrop .modalPanel, body.landscapeLayout #trumpBackdr
    ============================================================ */
 body.landscapeLayout #topbar{
   left:auto !important; right:0 !important; width:var(--sidePanelW, 28%);
-  padding: calc(4px + env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right)) 4px 6px !important;
+  padding: calc(4px + var(--sbTop)) calc(6px + env(safe-area-inset-right)) 4px 6px !important;
   background:transparent !important; border-bottom:none !important; box-sizing:border-box;
 }
 body.landscapeLayout #topRow{ flex-wrap:wrap; gap:4px; }
@@ -1829,21 +1829,21 @@ body.landscapeLayout #topbar .scorePill{ flex:1 1 40%; }
 body.landscapeLayout #topbar .marksPill{ order:3; flex:1 1 100%; }
 body.landscapeLayout .settingsBtn{
   left:calc(6px + env(safe-area-inset-left)) !important; right:auto !important;
-  top:calc(4px + env(safe-area-inset-top)) !important; min-height:34px; font-size:12px !important;
+  top:calc(4px + var(--sbTop)) !important; min-height:34px; font-size:12px !important;
 }
-body.landscapeLayout .settingsMenu{ left:calc(6px + env(safe-area-inset-left)) !important; right:auto !important; top:calc(42px + env(safe-area-inset-top)) !important; }
+body.landscapeLayout .settingsMenu{ left:calc(6px + env(safe-area-inset-left)) !important; right:auto !important; top:calc(42px + var(--sbTop)) !important; }
 body.landscapeLayout #statusBar{
-  top:calc(6px + env(safe-area-inset-top)) !important;
+  top:calc(6px + var(--sbTop)) !important;
   left:calc((100% - var(--sidePanelW, 28%)) / 2) !important;
   max-width:calc(100% - var(--sidePanelW, 28%) - 200px);
 }
-body.landscapeLayout .trumpDisplaySquare{ --trump-display-top: calc(44px + env(safe-area-inset-top)); --trump-display-left: calc(8px + env(safe-area-inset-left)); }
+body.landscapeLayout .trumpDisplaySquare{ --trump-display-top: calc(44px + var(--sbTop)); --trump-display-left: calc(8px + env(safe-area-inset-left)); }
 body.landscapeLayout #boneyard2Toggle{ right:calc(var(--sidePanelW, 28%) + 4px) !important; }
 body.landscapeLayout #trickHistoryBg{ border-radius:0; background:rgba(0,0,0,0.28); }
-body.landscapeLayout #bidBackdrop, body.landscapeLayout #trumpBackdrop{ padding-top:calc(8px + env(safe-area-inset-top)) !important; padding-right:var(--sidePanelW, 28%); }
+body.landscapeLayout #bidBackdrop, body.landscapeLayout #trumpBackdrop{ padding-top:calc(8px + var(--sbTop)) !important; padding-right:var(--sidePanelW, 28%); }
 
 /* v14.3.1: slim landscape panel — compact scores so the upright trick history gets the height */
-body.landscapeLayout #topbar{ padding: calc(3px + env(safe-area-inset-top)) calc(4px + env(safe-area-inset-right)) 2px 4px !important; }
+body.landscapeLayout #topbar{ padding: calc(3px + var(--sbTop)) calc(4px + env(safe-area-inset-right)) 2px 4px !important; }
 body.landscapeLayout #topRow{ gap:3px; }
 body.landscapeLayout #topbar .pill{ padding:2px 6px; border-radius:8px; }
 body.landscapeLayout #topbar .scoreLabel{ font-size:9px; }
@@ -1980,7 +1980,7 @@ body.landscapeLayout #topbar{ padding-right:calc(4px + var(--insR, 0px)) !import
 body.landscapeLayout.camLeft .settingsBtn{ left:calc((var(--insL) - 34px) / 2) !important; width:34px !important;
   min-height:34px !important; flex-direction:row !important; }
 html.onHome .settingsBtn{ left:calc(10px + env(safe-area-inset-left)) !important; right:auto !important;
-  top:calc(8px + env(safe-area-inset-top)) !important; }
+  top:calc(8px + var(--sbTop)) !important; }
 html.onHome .settingsMenu{ left:calc(10px + env(safe-area-inset-left)) !important; right:auto !important; }
 
 /* TN51 upright: menu icon top-right with the status line beside it, trick history + bones
@@ -2005,7 +2005,7 @@ body.stackTop #statusBar{ top:calc(8px + var(--insT, 0px)) !important; max-width
   #startMainBtns button{ padding:11px 20px !important; font-size:17px !important; }
 }
 html.onHome body .settingsBtn{ left:calc(10px + env(safe-area-inset-left)) !important; right:auto !important;
-  top:calc(8px + env(safe-area-inset-top)) !important; }
+  top:calc(8px + var(--sbTop)) !important; }
 @media (orientation: landscape) and (max-height: 600px){
   #homeButtonsWrap #screenNameSave{ font-size:14px !important; padding:9px 16px !important; }
   #homeButtonsWrap #screenNameInput{ font-size:15px !important; }
@@ -2048,3 +2048,8 @@ body.p4Down #playerIndicator4{ margin-top:var(--p4Shift, 0px); }
 body.rotating #gameWrapper, body.rotating .trumpDisplaySquare, body.rotating #statusBar,
 body.rotating #landscapeClock, body.rotating #boneyardPanel{ opacity:0 !important; transition:none !important; }
 body.p4Down #placeholder-p4{ visibility:hidden; }
+
+/* v14.4.1: iOS lays a frosted blur over everything under the status bar and a little below it
+   (about 40px). Nothing the player needs to read goes in that band: --sbTop is the status bar
+   plus the band, and 0 when there is no status bar (e.g. sideways). */
+:root{ --sbTop: calc(env(safe-area-inset-top) + min(42px, env(safe-area-inset-top) * 1000)); }

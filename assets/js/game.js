@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.4.0'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.4.1'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2137,6 +2137,8 @@ function _getSafeInsets(){
     raw = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
     d.remove();
   }
+  // v14.4.1: below the status bar iOS adds a frosted blur band (~40px); keep content out of it
+  if(raw.t > 0) raw.t += 42;
   var cam = Math.max(raw.l, raw.r);
   // v14.3.9: the screen's corners are rounded, so the non-camera side and the top keep a small
   // natural margin (about a fifth of the camera strip) instead of none
