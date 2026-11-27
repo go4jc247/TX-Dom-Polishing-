@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.8'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.9'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2059,8 +2059,12 @@ function _getSafeInsets(){
     d.remove();
   }
   var cam = Math.max(raw.l, raw.r);
-  if(side === 'left'){ raw.l = cam; raw.r = 0; }
-  else if(side === 'right'){ raw.r = cam; raw.l = 0; }
+  // v14.3.9: the screen's corners are rounded, so the non-camera side and the top keep a small
+  // natural margin (about a fifth of the camera strip) instead of none
+  var soft = Math.round(cam * 0.2);
+  if(side === 'left'){ raw.l = cam; raw.r = soft; }
+  else if(side === 'right'){ raw.r = cam; raw.l = soft; }
+  if(side && cam > 0) raw.t = Math.max(raw.t, soft);
   _safeInsets = { t: raw.t, r: raw.r, b: raw.b, l: raw.l, cam: (side && cam > 0) ? side : null, _w: window.innerWidth, _h: window.innerHeight, _side: side };
   var bs = document.body.style;
   bs.setProperty('--insL', raw.l + 'px'); bs.setProperty('--insR', raw.r + 'px');
@@ -2078,8 +2082,10 @@ function _landscapePanel(W, H, m, nPlayers, S, nTricks){
   // one trick per row, same groupings, so the panel is a slim strip down the right side.
   var ins = _getSafeInsets();
   var rect = getRect();
-  var pad = Math.max(5, Math.round(m * 0.8));
-  var GAPX = 0.3, GAPY = 0.06;   // v14.3.7: clear gap between players' columns
+  var pad = 4;
+  // v14.3.9: each trick is pushed together like a real set: the dominoes touch (about 1px apart),
+  // with a hairline between tricks, so the tiles can be bigger
+  var GAPX = 0.02, GAPY = 0.03;
   // First pass: a provisional width so the score boxes can be measured
   var panelW = Math.max(160, Math.min(260, W * 0.19));
   document.body.style.setProperty('--sidePanelW', (panelW + ins.r) + 'px');

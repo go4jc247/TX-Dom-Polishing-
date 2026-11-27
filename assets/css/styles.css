@@ -1935,7 +1935,9 @@ body.landscapeLayout #topbar .scoreValue{ font-size:15px; }
 body.landscapeLayout .settingsBtn{ left:calc(6px + var(--insL, 0px)) !important; }
 body.landscapeLayout .settingsMenu{ left:calc(6px + var(--insL, 0px)) !important; }
 body.landscapeLayout .trumpDisplaySquare{ --trump-display-left: calc(8px + var(--insL, 0px)); }
-body.landscapeLayout #topbar{ padding-right:calc(4px + var(--insR, 0px)) !important; }
+body.landscapeLayout #topbar{ padding-right:calc(4px + var(--insR, 0px)) !important; padding-top:calc(3px + var(--insT, 0px)) !important; }
+body.landscapeLayout .settingsBtn{ top:calc(4px + var(--insT, 0px)) !important; }
+body.landscapeLayout .trumpDisplaySquare{ --trump-display-top: calc(44px + var(--insT, 0px)); }
 body.landscapeLayout #statusBar{ left:calc(8px + var(--insL, 0px)) !important; }
 
 body.landscapeLayout.camLeft .settingsBtn{

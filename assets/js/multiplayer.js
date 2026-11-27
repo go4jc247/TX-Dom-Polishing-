@@ -10,7 +10,7 @@ function mpPlayerCount(){ return GAME_MODE === 'MOON' ? 3 : (GAME_MODE === 'T42'
 function mpMaxPip(){ return GAME_MODE === 'T42' || GAME_MODE === 'MOON' ? 6 : 7; }
 function mpHandSize(){ return GAME_MODE === 'T42' || GAME_MODE === 'MOON' ? 7 : 6; }
 const MP_WS_URL = 'wss://tn51-tx42-relay.onrender.com';  // V10_122: PRODUCTION
-const MP_VERSION = 'v14.3.8';  // v14.3.8: Landscape: only the camera side keeps its strip, clock, history snaps top and bottom
+const MP_VERSION = 'v14.3.9';  // v14.3.9: Landscape: soft edge margins for rounded corners, trick history tiles touch like a set
 
 // ═══════════════════════════════════════════════════════════════
 // V10_FIX: Multiplayer Sync Fix Variables

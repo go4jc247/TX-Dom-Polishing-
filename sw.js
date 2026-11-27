@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.8 — Landscape: only the camera side keeps its strip, clock, history snaps top and bottom
+// Version: v14.3.9 — Landscape: soft edge margins for rounded corners, trick history tiles touch like a set
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.8';
+const CACHE_NAME = 'tx-dom-v14.3.9';
 const urlsToCache = [
   './index.html',
   './sw.js',
