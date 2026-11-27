@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.4.2 — Bottom strip on iPhone blends into the table
+// Version: v14.4.3 — Undo the push-down; table fills the strips at top and bottom
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.4.2';
+const CACHE_NAME = 'tx-dom-v14.4.3';
 const urlsToCache = [
   './index.html',
   './sw.js',

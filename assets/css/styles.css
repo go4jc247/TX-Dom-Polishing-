@@ -2052,9 +2052,12 @@ body.p4Down #placeholder-p4{ visibility:hidden; }
 /* v14.4.1: iOS lays a frosted blur over everything under the status bar and a little below it
    (about 40px). Nothing the player needs to read goes in that band: --sbTop is the status bar
    plus the band, and 0 when there is no status bar (e.g. sideways). */
-:root{ --sbTop: calc(env(safe-area-inset-top) + min(42px, env(safe-area-inset-top) * 1000)); }
+:root{ --sbTop: env(safe-area-inset-top); }   /* v14.4.3: blur band removed (Reduce Transparency fixes the blur) */
 
 /* v14.4.2: iOS home-screen apps get a page area ~47pt shorter than the screen and fill the rest
    with the page background. Make that background the table's own darkened edge colour (felt C
    under the 32% vignette) so the strip blends into the table instead of showing as a band. */
-html:not(.onHome), html:not(.onHome) body{ background:color-mix(in srgb, var(--feltC, #0a4f1d) 68%, #000) !important; }
+/* v14.4.3: the strip behind a solid status bar takes the page colour: match the table's top edge */
+html:not(.onHome), html:not(.onHome) body{ background:color-mix(in srgb, var(--feltB, #0f6e2a) 90%, #000) !important; }
+/* the page is stretched down over the strip iOS leaves under it (see _setPwaGap) */
+#viewportWrapper{ bottom:calc(-1 * var(--pwaGap, 0px)) !important; }

@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.4.2'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.4.3'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2137,8 +2137,10 @@ function _getSafeInsets(){
     raw = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
     d.remove();
   }
-  // v14.4.1: below the status bar iOS adds a frosted blur band (~40px); keep content out of it
-  if(raw.t > 0) raw.t += 42;
+  // v14.4.3: iPhone home-screen app held upright: iOS gives the page a layout area shorter than
+  // the screen (by one status-bar height) and paints the rest with the page background, which
+  // showed as a bar under your hand. Stretch the game down over that strip.
+  _setPwaGap(raw.t);
   var cam = Math.max(raw.l, raw.r);
   // v14.3.9: the screen's corners are rounded, so the non-camera side and the top keep a small
   // natural margin (about a fifth of the camera strip) instead of none
@@ -2153,6 +2155,20 @@ function _getSafeInsets(){
   document.body.classList.toggle('camLeft', _safeInsets.cam === 'left');
   document.body.classList.toggle('camRight', _safeInsets.cam === 'right');
   return _safeInsets;
+}
+
+// v14.4.3: how much screen the iPhone home-screen app leaves below the page (0 elsewhere)
+function _setPwaGap(envTop){
+  var gap = 0;
+  if(window.navigator.standalone === true && window.innerHeight > window.innerWidth){
+    var sh = Math.max(screen.width, screen.height), diff = sh - window.innerHeight;
+    // status bar drawn over the page (envTop > 0): the whole difference is at the bottom;
+    // solid status bar (Reduce Transparency): the page starts below it, so half is at the top
+    if(diff >= 20 && diff <= 160) gap = envTop > 0 ? diff : Math.round(diff / 2);
+  }
+  if(window._fakePwaGap !== undefined) gap = window._fakePwaGap;     // test hook
+  document.documentElement.style.setProperty('--pwaGap', gap + 'px');
+  return gap;
 }
 
 // v14.3.0: landscape side panel on the right: scores at the top (the score bar is restyled
@@ -2338,6 +2354,7 @@ function _applyTrumpSpot(){
   el.style.setProperty('--trump-display-top', Math.round(r.top + _trumpSpot.top) + 'px');
 }
 function computeTn51AutoLayout(){
+  _getSafeInsets();          // v14.4.3: sets the page stretch before the table is measured
   var rect = getRect();
   var W = rect.width, H = rect.height;
   if(W < 100 || H < 100) return null;
@@ -2889,6 +2906,7 @@ function refreshMoonGhosts(){
 // ============================================================
 var T42_AUTO_LAYOUT = true;
 function computeT42AutoLayout(){
+  _getSafeInsets();
   document.body.classList.remove('stackTop');
   _trumpSpot = null; _applyTrumpSpot();
   var rect = getRect();
