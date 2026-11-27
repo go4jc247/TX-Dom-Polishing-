@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.1.2 — rotation keeps hands centered; popups scroll with pinned buttons
+// Version: v14.2.0 — calculated TN51 and T42 layouts, full screen, slim top bar with Menu button
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.1.2';
+const CACHE_NAME = 'tx-dom-v14.2.0';
 const urlsToCache = [
   './index.html',
   './sw.js',

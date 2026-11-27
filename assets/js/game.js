@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.1.2'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.2.0'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -1988,8 +1988,136 @@ let TN51_SETTINGS = {
   thRowSpacing: 0.1111, thColSpacing: 0.0311,
 };
 
+// ============================================================
+// v14.2.0: TN51 AUTO LAYOUT
+// Measures the screen and calculates where everything goes, instead of using
+// hand-placed coordinates. It only fills in TN51_SETTINGS; applyTn51Settings()
+// then writes the same LAYOUT sections as before, so sprites still glide from
+// hand -> played spot -> trick history with animateSprite.
+// Table: a flat-top hexagon. P4 on the top edge, P5 upper-right, P6 lower-right,
+// P2 lower-left, P3 upper-left (60-degree edges). P1's hand is the big row at the bottom.
+// ============================================================
+var TN51_AUTO_LAYOUT = true;
+var _tn51LastGeom = null; // for debugging: window._tn51LastGeom
+
+function _layoutTopY(rect){
+  // Lowest point of the score bar and the status line, relative to the table
+  var y = 0;
+  ['topbar', 'statusBar'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var r = el.getBoundingClientRect();
+    if(r.height > 0 && getComputedStyle(el).display !== 'none' && r.bottom - rect.top < rect.height * 0.3){
+      y = Math.max(y, r.bottom - rect.top);
+    }
+  });
+  return y;
+}
+
+function computeTn51AutoLayout(){
+  var rect = getRect();
+  var W = rect.width, H = rect.height;
+  if(W < 100 || H < 100) return null;
+  var S = TN51_SETTINGS;
+  var n = (session && session.game && session.game.hand_size) ? session.game.hand_size : 6;
+  var m = Math.max(6, Math.round(Math.min(W, H) * 0.02));
+  var landscape = W > H * 1.15;
+  var topY = _layoutTopY(rect) + m;
+  var bottomPad = m + 4;
+
+  // --- Your hand (P1): biggest tiles that fit, small gaps ---
+  var GAP = 0.08; // gap between your tiles, as a share of a tile's width
+  var handW = landscape ? W * 0.62 : (W - 2 * m);
+  var s1 = handW / (56 * (n + (n - 1) * GAP));
+  s1 = Math.min(s1, (landscape ? 0.22 : 0.22) * H / 112, 1.6);
+  var pitch1 = 56 * s1 * (1 + GAP);
+  var handCY = H - bottomPad - 56 * s1;
+  var handTop = handCY - 56 * s1;
+
+  // --- Trick history box: 8 columns (tricks) x 6 rows (one tile per player) ---
+  var thPad = Math.max(6, m);
+  var thMaxW = landscape ? W * 0.30 : (W - 2 * m);
+  var thMaxH = landscape ? (handTop - topY - m) : H * 0.2;
+  var sth = Math.min((thMaxW - 2 * thPad) / (8 * 112 * 1.06), (thMaxH - 2 * thPad) / (6 * 56 * 1.3), 0.6);
+  var thTileW = 112 * sth, thTileH = 56 * sth;
+  var thInnerW = landscape ? 8 * thTileW * 1.06 : (W - 2 * m - 2 * thPad);
+  var thBoxW = thInnerW + 2 * thPad, thBoxH = 6 * thTileH * 1.3 + 2 * thPad;
+  var thLeft = landscape ? m : (W - thBoxW) / 2;
+  var thTop = topY;
+  var thPitchX = (thInnerW - thTileW) / 7;
+  var thPitchY = thTileH * 1.3;
+
+  // --- Table area for the hexagon ---
+  var tabL, tabR, tabT, tabB;
+  if(landscape){ tabL = thLeft + thBoxW + m; tabR = W - m; tabT = topY; tabB = handTop - m; }
+  else { tabL = m; tabR = W - m; tabT = thTop + thBoxH + m; tabB = handTop - m; }
+  var availW = tabR - tabL, availH = tabB - tabT;
+  var k = 0.95 / (6 * 56 * 1.08);           // opponent tile scale per unit of hex radius
+  var R = Math.min(availW / 2 / (1 + 56 * k * 1.0 + 0.02), availH / 2 / (0.866 + 56 * k + 0.02));
+  R = Math.max(R, 40);
+  var sOpp = Math.min(R * k, 0.75);
+  var pitchOpp = 56 * sOpp * 1.08;
+  var cx = (tabL + tabR) / 2, cy = (tabT + tabB) / 2;
+  var a = 0.866 * R;                        // centre to the middle of each edge
+
+  // Rows along each edge: [settings prefix, edge normal, direction of tile index order]
+  var edges = {
+    2: { n: [-0.866,  0.5], d: [ 0.5,  0.866] },
+    3: { n: [-0.866, -0.5], d: [ 0.5, -0.866] },
+    4: { n: [ 0,     -1  ], d: [ 1,    0    ] },
+    5: { n: [ 0.866, -0.5], d: [-0.5, -0.866] },
+    6: { n: [ 0.866,  0.5], d: [-0.5,  0.866] }
+  };
+  for(var p = 2; p <= 6; p++){
+    var e = edges[p];
+    var mx = cx + a * e.n[0], my = cy + a * e.n[1];
+    var off0 = -(n - 1) / 2 * pitchOpp;
+    var x0 = (mx + off0 * e.d[0]) / W, y0 = (my + off0 * e.d[1]) / H;
+    var dxN = pitchOpp * e.d[0] / W, dyN = pitchOpp * e.d[1] / H;
+    S['p' + p + 'x'] = x0; S['p' + p + 'y'] = y0; S['p' + p + 'Scale'] = sOpp;
+    if(p === 4){ S.p4Spacing = dxN; }
+    else if(p === 2){ S.p2Spacing = dyN;  S.p2xOff = dxN - dyN; }
+    else if(p === 3){ S.p3Spacing = -dyN; S.p3xOff = dxN - (-dyN); }
+    else if(p === 5){ S.p5Spacing = -dyN; S.p5xOff = -dxN - (-dyN); }
+    else if(p === 6){ S.p6Spacing = dyN;  S.p6xOff = -dxN - dyN; }
+  }
+  // P1 hand: index 0 is the right end, going left
+  var handCX = landscape ? cx : W / 2;
+  S.p1Scale = s1; S.p1Spacing = pitch1 / W;
+  S.p1x = (handCX + (n - 1) / 2 * pitch1) / W; S.p1y = handCY / H;
+
+  // Played tiles, lead square and player markers, all relative to the hexagon
+  var played = { 1: [0, 0.40], 2: [-0.27, 0.20], 3: [-0.27, -0.20], 4: [0, -0.40], 5: [0.27, -0.20], 6: [0.27, 0.20] };
+  var marks  = { 1: [0, 0.60], 2: [-0.52, 0.38], 3: [-0.52, -0.38], 4: [0, -0.62], 5: [0.52, -0.38], 6: [0.52, 0.38] };
+  for(var q = 1; q <= 6; q++){
+    S['p' + q + 'TrickX'] = (cx + played[q][0] * R) / W; S['p' + q + 'TrickY'] = (cy + played[q][1] * R) / H;
+    S['ind' + q + 'x'] = (cx + marks[q][0] * R) / W;     S['ind' + q + 'y'] = (cy + marks[q][1] * R) / H;
+  }
+  S.trickScale = sOpp; S.leadScale = sOpp; S.leadX = cx / W; S.leadY = cy / H;
+
+  // Trick history grid
+  S.thScale = sth;
+  S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = thPitchX / W;
+  S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = thPitchY / H;
+  var bg = document.getElementById('trickHistoryBg');
+  if(bg){
+    bg.style.setProperty('--th-left', (thLeft / W * 100) + '%');
+    bg.style.setProperty('--th-top', (thTop / H * 100) + '%');
+    bg.style.setProperty('--th-width', (thBoxW / W * 100) + '%');
+    bg.style.setProperty('--th-height', (thBoxH / H * 100) + '%');
+  }
+  // Empty-slot outlines match the real tile size
+  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sOpp);
+  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sOpp);
+  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sOpp / 0.393);
+
+  _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: landscape, R: R, sOpp: sOpp, s1: s1, sth: sth, cx: cx, cy: cy, topY: topY };
+  return _tn51LastGeom;
+}
+
 function applyTn51Settings(){
   if(GAME_MODE !== 'TN51') return;
+  if(TN51_AUTO_LAYOUT){ try { computeTn51AutoLayout(); } catch(e){ console.warn('TN51 auto layout failed', e); } }
   const s = TN51_SETTINGS;
   const L = LAYOUT.sections;
   // P1 Hand (bottom, horizontal, right-to-left) — 6 tiles in TN51
@@ -2384,8 +2512,92 @@ function refreshMoonGhosts(){
   showMoonGhostDominos();
 }
 
+// ============================================================
+// v14.2.0: T42 AUTO LAYOUT (4 players, square table)
+// P1 = your hand at the bottom, P2 = left column, P3 = top row (partner), P4 = right column.
+// Fills T42_SETTINGS; applyT42Settings() writes the LAYOUT_T42 sections as before.
+// ============================================================
+var T42_AUTO_LAYOUT = true;
+function computeT42AutoLayout(){
+  var rect = getRect();
+  var W = rect.width, H = rect.height;
+  if(W < 100 || H < 100) return null;
+  var S = T42_SETTINGS, n = 7;
+  var m = Math.max(6, Math.round(Math.min(W, H) * 0.02));
+  var landscape = W > H * 1.15;
+  var topY = _layoutTopY(rect) + m;
+
+  // Your hand
+  var GAP = 0.08;
+  var handW = landscape ? W * 0.62 : (W - 2 * m);
+  var s1 = Math.min(handW / (56 * (n + (n - 1) * GAP)), 0.22 * H / 112, 1.6);
+  var pitch1 = 56 * s1 * (1 + GAP);
+  var handCY = H - (m + 4) - 56 * s1, handTop = handCY - 56 * s1;
+
+  // Trick history: 8 columns (tricks) x 4 rows
+  var thPad = Math.max(6, m);
+  var thMaxW = landscape ? W * 0.30 : (W - 2 * m);
+  var thMaxH = landscape ? (handTop - topY - m) : H * 0.17;
+  var sth = Math.min((thMaxW - 2 * thPad) / (8 * 112 * 1.06), (thMaxH - 2 * thPad) / (4 * 56 * 1.3), 0.6);
+  var thTileW = 112 * sth, thTileH = 56 * sth;
+  var thInnerW = landscape ? 8 * thTileW * 1.06 : (W - 2 * m - 2 * thPad);
+  var thBoxW = thInnerW + 2 * thPad, thBoxH = 4 * thTileH * 1.3 + 2 * thPad;
+  var thLeft = landscape ? m : (W - thBoxW) / 2, thTop = topY;
+
+  // Table area
+  var tabL, tabR, tabT, tabB;
+  if(landscape){ tabL = thLeft + thBoxW + m; tabR = W - m; tabT = topY; tabB = handTop - m; }
+  else { tabL = m; tabR = W - m; tabT = thTop + thBoxH + m; tabB = handTop - m; }
+  var availW = tabR - tabL, availH = tabB - tabT;
+  // Opponent tiles: a row of 7 along each side, 1.08 pitch; side columns must clear the top row
+  var sOpp = Math.min(availW / (7.5 * 56 + 2 * 112 * 1.2), availH / (7.5 * 56 + 2 * 112 * 1.2), 0.8);
+  var pitchO = 56 * sOpp * 1.08, depth = 112 * sOpp;
+  var cx = (tabL + tabR) / 2, cy = (tabT + tabB) / 2;
+  // Square table on a phone held upright; wider than tall when the phone is sideways
+  var halfX = Math.min(availW / 2, availH * 0.85), halfY = Math.min(availH / 2, halfX);
+  var colX2 = cx - halfX + depth / 2, colX4 = cx + halfX - depth / 2;
+  var rowY3 = cy - halfY + depth / 2;
+  var colCY = cy + depth * 0.3;             // side columns sit a little low, clear of the top row
+  S.p2Scale = S.p3Scale = S.p4Scale = sOpp;
+  S.p2x = colX2 / W; S.p2y = colCY / H; S.p2Spacing = pitchO / H;
+  S.p4x = colX4 / W; S.p4y = colCY / H; S.p4Spacing = pitchO / H;
+  S.p3x = (cx - 3 * pitchO) / W; S.p3y = rowY3 / H; S.p3Spacing = pitchO / W; S.p3xOff = 0;
+  S.p1Scale = s1; S.p1Spacing = pitch1 / W;
+  S.p1x = ((landscape ? cx : W / 2) + 3 * pitch1) / W; S.p1y = handCY / H;
+
+  // Centre: played tiles, lead square, player markers
+  var pcx = cx, pcy = colCY;
+  var dp = 112 * sOpp * 0.75;
+  S.trickScale = sOpp; S.leadScale = sOpp * 0.86; S.leadX = pcx / W; S.leadY = pcy / H;
+  S.p1TrickX = pcx / W;             S.p1TrickY = (pcy + dp) / H;
+  S.p3TrickX = pcx / W;             S.p3TrickY = (pcy - dp) / H;
+  S.p2TrickX = (pcx - dp * 1.55) / W; S.p2TrickY = pcy / H;
+  S.p4TrickX = (pcx + dp * 1.55) / W; S.p4TrickY = pcy / H;
+  var di = dp * 1.55 + 56 * sOpp + 20;
+  S.ind1x = pcx / W; S.ind1y = (pcy + dp + 56 * sOpp * 0.5 + 18) / H;
+  S.ind3x = pcx / W; S.ind3y = (pcy - dp - 56 * sOpp * 0.5 - 18) / H;
+  S.ind2x = (pcx - di) / W; S.ind2y = pcy / H;
+  S.ind4x = (pcx + di) / W; S.ind4y = pcy / H;
+
+  S.thScale = sth;
+  S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
+  S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
+  var bg = document.getElementById('trickHistoryBg');
+  if(bg){
+    bg.style.setProperty('--th-left', (thLeft / W * 100) + '%');
+    bg.style.setProperty('--th-top', (thTop / H * 100) + '%');
+    bg.style.setProperty('--th-width', (thBoxW / W * 100) + '%');
+    bg.style.setProperty('--th-height', (thBoxH / H * 100) + '%');
+  }
+  PLACEHOLDER_CONFIG_T42.dominoWidth = Math.round(112 * sOpp);
+  PLACEHOLDER_CONFIG_T42.dominoHeight = Math.round(56 * sOpp);
+  PLACEHOLDER_CONFIG_T42.leadSize = Math.round(28 * sOpp / 0.5);
+  return window._t42LastGeom = { W: W, H: H, landscape: landscape, sOpp: sOpp, s1: s1, sth: sth };
+}
+
 function applyT42Settings(){
   if(GAME_MODE !== 'T42') return;
+  if(T42_AUTO_LAYOUT){ try { computeT42AutoLayout(); } catch(e){ console.warn('T42 auto layout failed', e); } }
   const s = T42_SETTINGS;
   const L = LAYOUT_T42.sections;
   // P1 Hand (bottom, horizontal)
@@ -2496,11 +2708,22 @@ function initGameMode(mode){
   } else if(mode === 'T42'){
     session = new SessionV6_4g(4, 6, 7, 7);
     PLAY_ORDER = [1, 2, 3, 4];
+    _updateFluidLayoutClass();
     applyT42Settings();
   } else {
     session = new SessionV6_4g(6, 7, 6, 7);
     PLAY_ORDER = [1, 2, 3, 4, 5, 6];
   }
+  _updateFluidLayoutClass();
+  if(mode === 'TN51' && typeof applyTn51Settings === 'function'){ try { applyTn51Settings(); } catch(e){} }
+}
+
+// v14.2.0: modes with the calculated layout use the whole screen (no letterbox bars)
+function _usesAutoLayout(){ return (GAME_MODE === 'TN51' && TN51_AUTO_LAYOUT) || (GAME_MODE === 'T42' && typeof T42_AUTO_LAYOUT !== 'undefined' && T42_AUTO_LAYOUT); }
+function _updateFluidLayoutClass(){
+  var on = _usesAutoLayout();
+  document.body.classList.toggle('fluidLayout', on);
+  document.body.classList.toggle('landscapeLayout', on && window.innerWidth > window.innerHeight * 1.15);
 }
 let PASS_AND_PLAY_MODE = false;
 
@@ -11508,7 +11731,11 @@ function refreshLayout(){
 // v14.1.2: wait for resizing to settle, then lay out once (rotation fires many resize events)
 window.addEventListener('resize', function(){
   clearTimeout(window._refreshLayoutTimer);
-  window._refreshLayoutTimer = setTimeout(refreshLayout, 250);
+  window._refreshLayoutTimer = setTimeout(function(){
+    _updateFluidLayoutClass();
+    // Calculated layouts re-measure first (applyTn51Settings ends with refreshLayout)
+    if(_usesAutoLayout()){ if(GAME_MODE === 'T42') applyT42Settings(); else applyTn51Settings(); } else refreshLayout();
+  }, 250);
 });
 
 // Orientation change handler - refresh when returning to portrait

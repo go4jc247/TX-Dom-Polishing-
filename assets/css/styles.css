@@ -1767,3 +1767,42 @@
   touch-action:pan-y;
 }
 #bidBackdrop .modalPanel, #trumpBackdrop .modalPanel{ overflow:hidden !important; }
+
+/* v14.2.0: calculated layouts fill the whole screen (no letterbox bars) */
+body.fluidLayout #gameWrapper{ width:100vw; height:100vh; height:100dvh; }
+/* Landscape: popups can use more of the short screen */
+body.landscapeLayout .modalPanel{ max-height:92% !important; }
+body.landscapeLayout #bidBackdrop .modalPanel, body.landscapeLayout #trumpBackdrop .modalPanel{ max-width:60% !important; width:60% !important; }
+
+/* ============================================================
+   v14.2.0: slim top bar — Team 1 | Marks | Team 2 | Menu
+   One row, same style for every piece, so it reads as one bar.
+   ============================================================ */
+#topbar{
+  padding: calc(4px + env(safe-area-inset-top)) 86px 4px 8px !important;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.38), rgba(0,0,0,0.18));
+}
+#topRow{ gap:6px; align-items:stretch; }
+#topbar .pill{ padding:3px 8px; border-radius:10px; }
+#topbar .scorePill{ min-width:0; flex:0 1 92px; }
+#topbar .scoreLabel{ font-size:10px; letter-spacing:0.3px; }
+#topbar .scoreValue{ font-size:18px; margin-top:0; line-height:1.1; }
+#topbar .scoreBar{ height:3px; margin-top:3px; }
+#topbar .marksPill{ flex:1 1 auto; min-width:0; padding:3px 8px; }
+#topbar .marksLabel{ font-size:9px; margin-bottom:1px; }
+#topbar .marksDisplay{ gap:10px; }
+#topbar .tallyCanvas{ height:18px; width:auto; max-width:100%; }
+.settingsBtn{
+  top:calc(4px + env(safe-area-inset-top)) !important; right:8px !important;
+  width:auto !important; height:auto !important; min-height:40px; padding:0 10px !important;
+  border-radius:10px !important; gap:5px;
+  background:rgba(0,0,0,0.22) !important; border:1px solid rgba(255,255,255,0.14) !important;
+  color:rgba(255,255,255,0.9) !important; font-weight:800; font-size:13px !important;
+}
+.settingsBtn .menuIcon{ font-size:16px; line-height:1; }
+.settingsMenu{ top:calc(50px + env(safe-area-inset-top)) !important; right:8px !important; }
+#statusBar{ top:calc(54px + env(safe-area-inset-top)) !important; font-size:13px; max-width:calc(100% - 110px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.trumpDisplaySquare{ --trump-display-top: calc(52px + env(safe-area-inset-top)); --trump-display-left: 8px; width:34px !important; height:34px !important; }
+
+/* v14.2.0: bid and trump boxes open just under the top bar, never over the scores or Menu */
+#bidBackdrop, #trumpBackdrop{ padding-top:calc(50px + env(safe-area-inset-top)) !important; align-items:flex-start !important; }
