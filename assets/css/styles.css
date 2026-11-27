@@ -2018,3 +2018,33 @@ body.p4Down #playerIndicator4{ margin-top:var(--p4Shift, 0px); }
 #boneyardPanel .byHead{ flex-wrap:wrap; height:auto !important; row-gap:2px; margin-bottom:6px; }
 #boneyardPanel .byHead > span:first-child{ flex:1; }
 #boneyardPanel .byKey{ order:3; flex:1 1 100%; }
+
+/* v14.4.0: Game Settings fits without scrolling. Sideways: three columns, tighter spacing. */
+@media (orientation: landscape) and (max-height: 600px){
+  #gameSettingsBackdrop .modalPanel{ width:94vw !important; max-width:940px !important; max-height:calc(100% - 10px) !important; }
+  #gameSettingsBackdrop .modalHeader{ padding:6px 16px !important; font-size:17px !important; min-height:0 !important; }
+  #gameSettingsBackdrop .modalBody{ column-count:3; column-gap:20px; column-fill:balance; overflow:hidden !important; padding:6px 14px !important; }
+  #gameSettingsBackdrop .modalBody > div{ margin:0 0 6px 0 !important; padding:0 !important; border:none !important; }
+  #gameSettingsBackdrop .modalBody > div > div, #gameSettingsBackdrop .modalBody > div > label{ break-inside:avoid; margin-top:0 !important; margin-bottom:5px !important; padding-top:0 !important; padding-bottom:0 !important; }
+  #gameSettingsBackdrop .modalBody button.glossBtn{ padding:5px 6px !important; font-size:12px !important; min-height:0 !important; }
+  #gameSettingsBackdrop .gsMarksBtn{ padding:4px 12px !important; }
+  #gameSettingsBackdrop .modalFooter{ padding:6px 12px !important; }
+  #gameSettingsBackdrop .modalFooter .glossBtn{ padding:8px 22px !important; font-size:15px !important; }
+}
+@media (orientation: portrait){
+  #gameSettingsBackdrop .modalPanel{ max-height:calc(100% - 16px) !important; }
+  #gameSettingsBackdrop .modalHeader{ padding:10px 16px !important; }
+  #gameSettingsBackdrop .modalBody{ padding-top:6px !important; padding-bottom:6px !important; }
+  #gameSettingsBackdrop .modalBody > div{ margin-top:0 !important; margin-bottom:8px !important; padding-top:6px !important; padding-bottom:0 !important; }
+  #gameSettingsBackdrop .modalBody > div > div, #gameSettingsBackdrop .modalBody > div > label{ margin-top:0 !important; margin-bottom:6px !important; padding-top:0 !important; padding-bottom:0 !important; }
+  #gameSettingsBackdrop .modalBody button.glossBtn{ padding-top:7px !important; padding-bottom:7px !important; }
+  #gameSettingsBackdrop .modalFooter{ padding:8px 12px !important; }
+}
+@media (orientation: portrait) and (max-height: 760px){
+  #gameSettingsBackdrop .modalBody{ zoom:0.83; }
+}
+/* v14.4.0: hide the table for a moment while the phone rotates, then fade it back in */
+#gameWrapper, .trumpDisplaySquare, #statusBar, #landscapeClock{ transition:opacity .18s ease; }
+body.rotating #gameWrapper, body.rotating .trumpDisplaySquare, body.rotating #statusBar,
+body.rotating #landscapeClock, body.rotating #boneyardPanel{ opacity:0 !important; transition:none !important; }
+body.p4Down #placeholder-p4{ visibility:hidden; }

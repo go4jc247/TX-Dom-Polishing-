@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.9 — Landscape: soft edge margins for rounded corners, trick history tiles touch like a set
+// Version: v14.4.0 — TN51 polish: portrait top rearranged, tight sideways cluster, reveals, boneyard, instant rotation
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.9';
+const CACHE_NAME = 'tx-dom-v14.4.0';
 const urlsToCache = [
   './index.html',
   './sw.js',

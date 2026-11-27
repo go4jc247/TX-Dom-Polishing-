@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.3.9'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.4.0'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -974,7 +974,7 @@ function _p4RevealShift(on){
     sprites[seat].forEach(function(d){
       if(!d || !d.sprite) return;
       var p = d.sprite.getPose();
-      dy = Math.max(dy, topMin - (p.y + 56 - 56 * p.s));
+      dy = Math.max(dy, topMin - (p.y - (d.sprite._p4dy || 0) + 56 - 56 * p.s));   // measured from the unshifted row
     });
   }
   if(seat >= 0 && sprites[seat]) sprites[seat].forEach(function(d){
@@ -1007,7 +1007,14 @@ function _fitOverlayToOpen(overlay, panel){
   if(!overlay) return;
   panel = panel || overlay.firstElementChild;
   var R = _openCenterRect();
-  if(!R){ delete overlay.dataset.openFit; return; }
+  if(!R){
+    if(overlay.dataset.openFit === '1'){      // undo an earlier sideways placement
+      ['position','left','top','width','height','right','bottom','padding','align-items','justify-content','background'].forEach(function(k){ overlay.style.removeProperty(k); });
+      if(overlay.id === 'roundEndOverlay' || overlay.id === 'gameEndOverlay'){ overlay.style.position = 'absolute'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.paddingTop = '25%'; }
+      if(panel) ['transform','max-width','position','margin','left','top'].forEach(function(k){ panel.style.removeProperty(k); });
+    }
+    delete overlay.dataset.openFit; return;
+  }
   overlay.dataset.openFit = '1';
   var st = overlay.style;
   st.setProperty('position', 'absolute', 'important');
@@ -2308,7 +2315,8 @@ function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner,
   var tp = null;      // no free spot (very small screens): it stays under the menu button
   for(var ci = 0; ci < cand.length; ci++){
     var tb = { x: cand[ci][0], y: cand[ci][1], w: TW + GAPT, h: TH + GAPT };
-    if(cand[ci][1] + TH / 2 + GAPT > bottomInner) continue;      // never on top of your hand
+    var handTopRel = (opts.handTopRel !== undefined) ? opts.handTopRel : bottomInner;
+    if(cand[ci][1] + TH / 2 + GAPT > handTopRel) continue;      // never on top of your hand
     if(!used.some(function(b){ return hit(tb, b); })){ tp = cand[ci]; break; }
   }
   _trumpSpot = tp ? { left: cx + tp[0] - TW / 2, top: cy + tp[1] - TH / 2 } : null;
@@ -2380,7 +2388,7 @@ function computeTn51AutoLayout(){
   S.p1x = (handCX + (n - 1) / 2 * pitch1) / W; S.p1y = handCY / H;
 
   // Tags and played tiles in front of each row (nothing on the bottom edge upright)
-  var sPlayP = _tn51TagsAndPlays(S, W, H, cx, cy, Rx / 2, Rx, Ry, 112 * sOpp, sOpp, Ry, 22, 44, true);
+  var sPlayP = _tn51TagsAndPlays(S, W, H, cx, cy, Rx / 2, Rx, Ry, 112 * sOpp, sOpp, Ry, 22, 44, true, { handTopRel: handTop - cy });
   _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: false, R: R, sOpp: sOpp, s1: s1, cx: cx, cy: cy };
   return _tn51LastGeom;
 }
@@ -6706,6 +6714,8 @@ function bringToFront(sprite){
 }
 
 function animateSprite(sprite, targetPose, duration, easing = ANIM.EASING){
+  // v14.4.0: while the phone is rotating, everything snaps into place (no sliding)
+  if(_instantLayout && sprite && sprite.setPose){ sprite.setPose(Object.assign({}, sprite.getPose(), targetPose)); return Promise.resolve(); }
   return new Promise(resolve => {
     const start = sprite.getPose();
     const startTime = performance.now();
@@ -7054,6 +7064,13 @@ function hideLeadDomino(){
 function createPlaceholders(){
   const tableMain = document.getElementById('tableMain');
 
+  // v14.4.0: remember each spot's bid text (PASS, 34, ...) so a re-layout (rotation) keeps it
+  const _keepText = {};
+  Object.keys(placeholderElements).forEach(k => {
+    const el = placeholderElements[k]; if(!el) return;
+    const t = el.querySelector('.text');
+    _keepText[k] = { text: t ? t.textContent : '', cls: ['bid-active','bid-pass','bid-winner'].filter(c => el.classList.contains(c)) };
+  });
   // Remove existing placeholders
   Object.values(placeholderElements).forEach(el => el && el.remove());
   placeholderElements = {};
@@ -7093,6 +7110,8 @@ function createPlaceholders(){
 
     tableMain.appendChild(el);
     placeholderElements[`p${p}`] = el;
+    const _k = _keepText[`p${p}`];
+    if(_k){ text.textContent = _k.text; _k.cls.forEach(c => el.classList.add(c)); }
   }
 
   // Create persistent lead pip display (replaces old lead placeholder)
@@ -7252,7 +7271,7 @@ function recenterHand(seat){
     const px = normToPx(xN, yN);
     const targetPose = {
       x: px.x - 28,
-      y: px.y - 56,
+      y: px.y - 56 + (data.sprite._p4dy || 0),   // v14.4.0: keep a revealed P4 row slid down
       s: first.scale,
       rz: first.rotZ,
       ry: data.sprite.getPose().ry
@@ -12197,6 +12216,23 @@ function refreshLayout(){
   // Note: Trick history dominoes are in fixed positions and handled by their own layout
 }
 
+// v14.4.0: turning the phone hides the table at once, lays everything out with no sliding,
+// then shows it again a moment later, instead of letting you watch the dominoes reshuffle.
+var _instantLayout = false;
+var _lastSize = { w: window.innerWidth, h: window.innerHeight };
+window.addEventListener('resize', function(){
+  var w = window.innerWidth, h = window.innerHeight;
+  var flipped = (w > h) !== (_lastSize.w > _lastSize.h);
+  var big = Math.abs(w - _lastSize.w) > _lastSize.w * 0.1 || Math.abs(h - _lastSize.h) > _lastSize.h * 0.1;
+  _lastSize = { w: w, h: h };
+  if(!flipped && !big) return;
+  _instantLayout = true;
+  document.body.classList.add('rotating');
+  clearTimeout(window._rotShowTimer); clearTimeout(window._rotEndTimer);
+  window._rotShowTimer = setTimeout(function(){ document.body.classList.remove('rotating'); }, 420);
+  window._rotEndTimer = setTimeout(function(){ _instantLayout = false; }, 900);
+});
+
 // v14.1.2: wait for resizing to settle, then lay out once (rotation fires many resize events)
 window.addEventListener('resize', function(){
   clearTimeout(window._refreshLayoutTimer);
@@ -12204,6 +12240,15 @@ window.addEventListener('resize', function(){
     _updateFluidLayoutClass();
     // Calculated layouts re-measure first (applyTn51Settings ends with refreshLayout)
     if(_usesAutoLayout()){ if(GAME_MODE === 'T42') applyT42Settings(); else applyTn51Settings(); } else refreshLayout();
+    // v14.4.0: re-place a revealed P4 row and any end-of-round / lay-down box for the new shape
+    try {
+      if(document.body.classList.contains('p4Down') && typeof sprites !== 'undefined'){
+        _p4RevealShift(true);
+      }
+      ['roundEndOverlay', 'gameEndOverlay'].forEach(function(id){ var o = document.getElementById(id); if(o && o.style.display !== 'none' && o.firstElementChild) _fitOverlayToOpen(o); });
+      var ld = document.getElementById('layDownBackdrop');
+      if(ld && ld.style.display === 'flex') _fitOverlayToOpen(ld, document.getElementById('layDownPanel'));
+    } catch(e){ console.warn('re-fit after resize', e); }
   }, 250);
 });
 

@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.3.9 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.4.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.json + sw.js)
@@ -208,7 +208,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.3.9): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.4.0): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -218,6 +218,23 @@ function _lazyLoad(src, cb) {
    compact Menu + trump marker (top) and #landscapeClock (bottom). Test hooks: window._fakeInsets,
    window._fakeCamSide. Trick history: Team 2's first trick snaps to the bottom (S.thTeamGap).
    Known: T42 landscape centre still crowded (played spots overlap LEAD/tags) - needs the TN51 declutter.
+   v14.4.0 (TN51 only unless noted):
+   - Portrait: body.stackTop = menu icon top-right (status beside it), trick history+bones at the
+     top, score bar below it (--scoreTop), then the table. T42/Moon portrait unchanged.
+   - Menu is a 34px three-line icon everywhere (no "Menu" text); top-left on the home screen.
+   - Home: html.onHome makes the page navy; #startScreenBackdrop/#gameWrapper use inset/100% not
+     100vh (iPhone PWA showed green strips). Sideways home = logo left, buttons right.
+   - LEAD square centred with its real size (_centerLeadPip). Trump marker has a TRUMP label and
+     is placed by the engine (_trumpSpot) next to the play; falls back to under the menu.
+   - Landscape: played tiles cluster around LEAD (opts.leadMid: LEAD halfway between You and P4
+     tags); hand grows upward while the cluster still fits at >= 1.15x sOpp.
+   - Reveals: _p4RevealShift slides P4's row/tag fully on screen at hand end or P4 lay-down;
+     _fitOverlayToOpen puts round-end/game-end/lay-down boxes in the open middle (landscape).
+   - Boneyard drawer (landscape) grid turned 90 degrees (one column per suit).
+   - Rotation: body.rotating hides the table ~0.4s; _instantLayout makes animateSprite snap.
+     Bid labels survive re-layout. Game Settings fits without scrolling (3 columns sideways).
+   - Popup audit: tn51/t42 layout-slider windows and boneyard-2 settings still scroll; the slider
+     windows are obsolete (engines override them) - removal needs owner approval (Rule 4).
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.
