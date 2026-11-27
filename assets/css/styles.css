@@ -2110,3 +2110,14 @@ body:not(.landscapeLayout) #topbar #marksPill .marksDisplay{ position:absolute; 
 body:not(.landscapeLayout) #topbar #marksPill .marksLabel{ position:relative; z-index:1; }
 body.landscapeLayout #topbar .marksDisplay{ align-self:stretch; }
 body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
+
+/* v14.5.6: owner prefers the original darker, muted look (bright colours are harder to read):
+   player tags use the original muted team colours (measured from v13: blue ~#2b749d, red ~#9e5e42),
+   and the score / marks boxes get back their darker background */
+.playerIndicator{ border:none !important; box-shadow:0 1px 4px rgba(0,0,0,0.35) !important; }
+.playerIndicator.team1{ background:#2b749d !important; color:rgba(255,255,255,0.9) !important; }
+.playerIndicator.team2{ background:#9e5e42 !important; color:rgba(255,255,255,0.9) !important; }
+.playerIndicator.team3{ background:#3f8a4f !important; color:rgba(255,255,255,0.9) !important; }
+#topbar .pill{ background:rgba(0,0,0,0.45) !important; border-color:rgba(255,255,255,0.10) !important; }
+#team1Pill{ border-left-color:#2b749d !important; }
+#team2Pill{ border-left-color:#9e5e42 !important; }

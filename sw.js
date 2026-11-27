@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.5.5 — Marks fill the box height with the original stroke weight
+// Version: v14.5.6 — Original muted tag colours and darker score boxes
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.5.5';
+const CACHE_NAME = 'tx-dom-v14.5.6';
 const urlsToCache = [
   './index.html',
   './sw.js',
