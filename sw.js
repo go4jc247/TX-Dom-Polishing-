@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.4.6 — Top edge: solid colour fading into the table
+// Version: v14.4.7 — Status bar colour switches as soon as the game starts
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.4.6';
+const CACHE_NAME = 'tx-dom-v14.4.7';
 const urlsToCache = [
   './index.html',
   './sw.js',

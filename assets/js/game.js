@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.4.6'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.4.7'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -12280,9 +12280,24 @@ setTimeout(_updateLandscapeClock, 500);
   function sync(){
     var sb = document.getElementById('startScreenBackdrop');
     var on = !!sb && sb.style.display !== 'none' && getComputedStyle(sb).display !== 'none';
+    var was = document.documentElement.classList.contains('onHome');
     document.documentElement.classList.toggle('onHome', on);
     var tc = document.querySelector('meta[name="theme-color"]');
     if(tc) tc.setAttribute('content', on ? '#01001e' : '#1a5c2a');
+    if(was !== on) _refreshStatusTint();
+  }
+  // v14.4.7: iOS picks the status-bar colour from #statusTint but does not notice when only its
+  // colour changes (it stayed home-screen blue in the game). Swap in a fresh strip a few times
+  // over the next second so iOS re-reads it.
+  function _refreshStatusTint(){
+    [0, 120, 400, 1000].forEach(function(ms){
+      setTimeout(function(){
+        var old = document.getElementById('statusTint'); if(!old) return;
+        var fresh = old.cloneNode(false);
+        old.parentNode.replaceChild(fresh, old);
+        void fresh.offsetHeight;
+      }, ms);
+    });
   }
   function start(){
     var sb = document.getElementById('startScreenBackdrop');
