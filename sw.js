@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.4.4 — Undo the bottom stretch (it cut off the hand)
+// Version: v14.4.5 — Fill the screen upright: no cover setting, solid green status bar
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.4.4';
+const CACHE_NAME = 'tx-dom-v14.4.5';
 const urlsToCache = [
   './index.html',
   './sw.js',

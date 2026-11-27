@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.4.4 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.4.5 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.json + sw.js)
@@ -208,7 +208,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.4.4): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.4.5): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -235,13 +235,14 @@ function _lazyLoad(src, cb) {
      Bid labels survive re-layout. Game Settings fits without scrolling (3 columns sideways).
    - Popup audit: tn51/t42 layout-slider windows and boneyard-2 settings still scroll; the slider
      windows are obsolete (engines override them) - removal needs owner approval (Rule 4).
-   v14.4.1-14.4.3: iOS 27 blurs content under the status bar; the owner fixes that with Reduce
-     Transparency (do NOT push content down - v14.4.1's 42px band was reverted in v14.4.3).
-     --sbTop = env(safe-area-inset-top). iPhone home-screen app upright: the layout viewport is one
-     status-bar height shorter than the screen and iOS paints the rest with the page bg.
-     _setPwaGap() (navigator.standalone, portrait) sets --pwaGap and #viewportWrapper stretches
-     down by it (diff if status bar overlays the page, diff/2 if it's solid). Page bg = table top
-     edge colour so the solid status-bar strip blends. Test hook: window._fakePwaGap.
+   v14.4.1-14.4.5 (iOS 27 home-screen app findings, proven on the owner's iPhone):
+     - viewport-fit=cover upright makes iOS cut the page ~47pt short at the bottom (bar under the
+       hand) and blurs content near the top. Test page cover-test.html (v13 + cover only) proved it.
+       So index.html sets viewport-fit=cover ONLY when sideways (#metaViewport script in <head>).
+     - #statusTint: fixed 8px coloured strip at top:0 (portrait) makes iOS 27 paint the status bar
+       solid in that colour with no blur (modernwebweekly "So what's up with the iOS 27 blur").
+       Table green in game, #0a3e8a on the home screen. theme-color/status-bar-style do nothing.
+     - Do NOT push content down or stretch the page (14.4.1 / 14.4.3 attempts, both reverted).
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.
