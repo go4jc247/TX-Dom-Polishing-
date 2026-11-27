@@ -2057,7 +2057,7 @@ body.p4Down #placeholder-p4{ visibility:hidden; }
 /* v14.4.2: iOS home-screen apps get a page area ~47pt shorter than the screen and fill the rest
    with the page background. Make that background the table's own darkened edge colour (felt C
    under the 32% vignette) so the strip blends into the table instead of showing as a band. */
-/* v14.4.3: the strip behind a solid status bar takes the page colour: match the table's top edge */
-html:not(.onHome), html:not(.onHome) body{ background:color-mix(in srgb, var(--feltB, #0f6e2a) 90%, #000) !important; }
-/* the page is stretched down over the strip iOS leaves under it (see _setPwaGap) */
-#viewportWrapper{ bottom:calc(-1 * var(--pwaGap, 0px)) !important; }
+/* v14.4.4: iOS paints the strip below the page (which the game cannot draw into) with this
+   colour: match the table's darkened bottom edge so it blends. (v14.4.3's stretch was reverted:
+   iOS clips the page at the strip, so stretching cut off the hand.) */
+html:not(.onHome), html:not(.onHome) body{ background:color-mix(in srgb, var(--feltC, #0a4f1d) 68%, #000) !important; }
