@@ -2130,6 +2130,63 @@ function _placeTn51Rows(S, V, cx, cy, sOpp, pitchOpp, n, W, H){
   }
 }
 
+// v14.3.6: place each player's tag just inside their row and their played tile just inside
+// the tag (so every play lands in front of the player who made it). Only LEAD stays in the
+// middle. The played-tile size is the largest (up to 1.3x the row tiles) at which no slot,
+// tag or the LEAD square touches another. Shared by the upright and sideways TN51 layouts.
+//   B, Ls, Ry   hexagon half top-edge, slanted side length, centre-to-top-edge distance
+//   bottomInner centre to the inner face of whatever sits on the bottom edge (your hand
+//               sideways; nothing upright, so the edge itself)
+//   cluster     true: played tiles grouped around LEAD (upright, where the table is narrow)
+function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner, TAGH, TAGW, cluster){
+  var GAPT = 8, LEADW = 44, LEADH = 62;
+  var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
+  var mids = { 2: [-B - Ls / 4, Ry / 2], 3: [-B - Ls / 4, -Ry / 2], 5: [B + Ls / 4, -Ry / 2], 6: [B + Ls / 4, Ry / 2] };
+  function spots(sp){
+    var hw = 56 * sp, hh = 28 * sp, o = {}, t = {};
+    for(var q in nrm){
+      var tagE = Math.abs(nrm[q][0]) * TAGW / 2 + Math.abs(nrm[q][1]) * TAGH / 2;
+      var tileE = Math.abs(nrm[q][0]) * hw + Math.abs(nrm[q][1]) * hh;
+      // on a 60-degree row an 8px gap measured square-on needs ~1.4x the room along the row's normal
+      var G2 = GAPT * 1.4;
+      var tagD = depth / 2 + G2 + tagE, tileD = depth / 2 + G2 + 2 * tagE + G2 + tileE;
+      t[q] = [mids[q][0] - nrm[q][0] * tagD, mids[q][1] - nrm[q][1] * tagD];
+      // played tile straight across from the tag, toward the middle (keeps P2/P3 and P5/P6 apart)
+      var side = nrm[q][0] < 0 ? 1 : -1;
+      o[q] = [t[q][0] + side * (TAGW / 2 + GAPT + hw), t[q][1]];
+    }
+    t[4] = [0, -Ry + depth / 2 + GAPT + TAGH / 2];  o[4] = [0, -Ry + depth / 2 + GAPT + TAGH + GAPT + hh];
+    t[1] = [0, bottomInner - GAPT - TAGH / 2];       o[1] = [0, bottomInner - GAPT - TAGH - GAPT - hh];
+    if(cluster){
+      var sx = LEADW / 2 + GAPT + hw, sy = hh + GAPT / 2, vy = LEADH / 2 + GAPT + hh;
+      o = { 1: [0, vy], 4: [0, -vy], 2: [-sx, sy], 3: [-sx, -sy], 5: [sx, -sy], 6: [sx, sy] };
+    }
+    return { tiles: o, tags: t, hw: hw, hh: hh };
+  }
+  function hit(a, b){ return Math.abs(a.x - b.x) * 2 < a.w + b.w - 1 && Math.abs(a.y - b.y) * 2 < a.h + b.h - 1; }
+  function fits(sp){
+    var L = spots(sp), bx = [{ n: 'LEAD', x: 0, y: 0, w: LEADW + GAPT, h: LEADH + GAPT }];
+    for(var q = 1; q <= 6; q++){
+      bx.push({ n: 'tile' + q, x: L.tiles[q][0], y: L.tiles[q][1], w: 2 * L.hw + GAPT, h: 2 * L.hh + GAPT });
+      bx.push({ n: 'tag' + q, x: L.tags[q][0], y: L.tags[q][1], w: TAGW + GAPT, h: TAGH + GAPT });
+    }
+    for(var i = 0; i < bx.length; i++) for(var j = i + 1; j < bx.length; j++) if(hit(bx[i], bx[j])) return false;
+    return true;
+  }
+  var sPlay = 1.3 * sOpp;
+  while(sPlay > 0.5 * sOpp && !fits(sPlay)) sPlay -= 0.01;
+  var LP = spots(sPlay);
+  for(var q2 = 1; q2 <= 6; q2++){
+    S['p' + q2 + 'TrickX'] = (cx + LP.tiles[q2][0]) / W; S['p' + q2 + 'TrickY'] = (cy + LP.tiles[q2][1]) / H;
+    S['ind' + q2 + 'x'] = (cx + LP.tags[q2][0]) / W;     S['ind' + q2 + 'y'] = (cy + LP.tags[q2][1]) / H;
+  }
+  S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = cy / H;
+  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
+  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
+  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sPlay / 0.393);
+  return sPlay;
+}
+
 function computeTn51AutoLayout(){
   var rect = getRect();
   var W = rect.width, H = rect.height;
@@ -2174,18 +2231,8 @@ function computeTn51AutoLayout(){
   S.p1Scale = s1; S.p1Spacing = pitch1 / W;
   S.p1x = (handCX + (n - 1) / 2 * pitch1) / W; S.p1y = handCY / H;
 
-  // Played spots, lead square and player markers, relative to the hexagon
-  var Ryn = Ry / 0.866;
-  var played = { 1: [0, 0.46], 2: [-0.34, 0.20], 3: [-0.34, -0.20], 4: [0, -0.46], 5: [0.34, -0.20], 6: [0.34, 0.20] };
-  var marks  = { 1: [0, 0.64], 2: [-0.554, 0.32], 3: [-0.554, -0.32], 4: [0, -0.64], 5: [0.554, -0.32], 6: [0.554, 0.32] };
-  for(var q = 1; q <= 6; q++){
-    S['p' + q + 'TrickX'] = (cx + played[q][0] * Rx) / W; S['p' + q + 'TrickY'] = (cy + played[q][1] * Ryn) / H;
-    S['ind' + q + 'x'] = (cx + marks[q][0] * Rx) / W;     S['ind' + q + 'y'] = (cy + marks[q][1] * Ryn) / H;
-  }
-  S.trickScale = sOpp; S.leadScale = sOpp; S.leadX = cx / W; S.leadY = cy / H;
-  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sOpp);
-  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sOpp);
-  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sOpp / 0.393);
+  // Tags and played tiles in front of each row (nothing on the bottom edge upright)
+  var sPlayP = _tn51TagsAndPlays(S, W, H, cx, cy, Rx / 2, Rx, Ry, 112 * sOpp, sOpp, Ry, 22, 44, true);
   _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: false, R: R, sOpp: sOpp, s1: s1, cx: cx, cy: cy };
   return _tn51LastGeom;
 }
@@ -2228,10 +2275,14 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   var w = 56 * sOpp, depth = 112 * sOpp;
   // 2. Half-length of the top/bottom edges: at least a regular hexagon's, and wide enough that
   // P2/P6's end tiles clear your row
-  var B = Math.max(Ls2 / 2, handW / 2 + 2.4 * w + 10);
-  // Keep the whole table (plus outside markers) inside the table area
-  var maxHalf = (tabR - tabL) / 2 - depth / 2 - 40;
-  if(B + Ls2 / 2 > maxHalf){ B = Math.max(Ls2 / 2, maxHalf - Ls2 / 2); }
+  // Keep the whole table inside the table area. On small screens, shrink your hand until the
+  // bottom edge is wide enough for it.
+  var maxHalf = (tabR - tabL) / 2 - depth / 2 - 8;
+  var Bmax = Math.max(Ls2 / 2, maxHalf - Ls2 / 2);
+  while(handW / 2 + 2.4 * w + 10 > Bmax && s1 > 0.3){
+    s1 -= 0.02; pitch1 = 56 * s1 * (1 + GAP1); handW = (n - 1) * pitch1 + 56 * s1;
+  }
+  var B = Math.min(Bmax, Math.max(Ls2 / 2, handW / 2 + 2.4 * w + 10));
   var cy = edgeY - Ry;
   var V = { L: [-B - Ls2 / 2, 0], UL: [-B, -Ry], UR: [B, -Ry], R: [B + Ls2 / 2, 0], LR: [B, Ry], LL: [-B, Ry] };
   var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
@@ -2239,39 +2290,13 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   S.p1Scale = s1; S.p1Spacing = pitch1 / W;
   S.p1x = (cx + (n - 1) / 2 * pitch1) / W; S.p1y = edgeY / H;
 
-  // 4. Played tiles: in proportion (up to 1.25x the others), tight around the lead square
-  var g = 4;
-  var TAG = 30;                                       // room for a player tag inside each row
-  var innerTop = Ry - 56 * sOpp - TAG;                // centre to P4 row's inner face, less the tag
-  var innerBottom = Ry - 56 * s1 - TAG;               // centre to your row's inner face, less the tag
-  var innerSide = 0.866 * B + 0.5 * Ry - 56 * sOpp - TAG; // same for the slanted rows
-  var sPlay = Math.min(1.25 * sOpp,
-                       (Math.min(innerTop, innerBottom) - g) / 112,
-                       (innerSide - 0.866 * g - 0.25 * g) / 149.2);
-  sPlay = Math.max(sPlay, sOpp * 0.8);
-  var cTopY = 28 * sPlay + g / 2, side = 84 * sPlay + g, vert = 84 * sPlay + g;
-  var pos = { 1: [0, vert], 4: [0, -vert], 2: [-side, cTopY], 3: [-side, -cTopY], 5: [side, -cTopY], 6: [side, cTopY] };
-  for(var q = 1; q <= 6; q++){ S['p' + q + 'TrickX'] = (cx + pos[q][0]) / W; S['p' + q + 'TrickY'] = (cy + pos[q][1]) / H; }
-  S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = cy / H;
+  // 4+5. Tags and played tiles in front of each row; LEAD alone in the middle
+  var sPlay = _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls2, Ry, depth, sOpp, Ry - 56 * s1, 30, 54);
 
-  // 5. Player tags: on the table side of each row, centred on it, so every tag reads as
-  // "this row belongs to this player". Yours sits just above your hand.
-  var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
-  var mids = { 2: [-B - Ls2 / 4, Ry / 2], 3: [-B - Ls2 / 4, -Ry / 2], 5: [B + Ls2 / 4, -Ry / 2], 6: [B + Ls2 / 4, Ry / 2] };
-  var inD = depth / 2 + 16;
-  for(var q2 in nrm){
-    S['ind' + q2 + 'x'] = (cx + mids[q2][0] - nrm[q2][0] * inD) / W;
-    S['ind' + q2 + 'y'] = (cy + mids[q2][1] - nrm[q2][1] * inD) / H;
-  }
-  S.ind4x = cx / W; S.ind4y = (cy - Ry + depth / 2 + 15) / H;
-  S.ind1x = cx / W; S.ind1y = (edgeY - 56 * s1 - 15) / H;
   // Status line lives in the bottom-left corner; keep it clear of P2's row and your hand
   var statusMax = Math.max(120, cx - B - Ls2 / 4 - ins.l - 12);
   document.body.style.setProperty('--statusMaxW', Math.round(statusMax) + 'px');
 
-  PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
-  PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
-  PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sPlay / 0.393);
   _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: true, B: B, Ls: Ls2, Ry: Ry, sOpp: sOpp, s1: s1, sPlay: sPlay, cx: cx, cy: cy };
   return _tn51LastGeom;
 }

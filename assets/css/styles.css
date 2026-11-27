@@ -1903,3 +1903,6 @@ body.landscapeLayout #statusBar{ max-width:var(--statusMaxW, 24%) !important; }
 #boneyardPanel .byCell.mine{ box-shadow:0 0 0 2px #fde68a; border-radius:4px; }
 #boneyardPanel .byCell.trump::after{ content:''; position:absolute; inset:-2px; border:2px solid rgba(74,222,128,0.9); border-radius:5px; pointer-events:none; }
 body:not(.landscapeLayout) #boneyardPanel{ display:none !important; }
+
+/* v14.3.6 sideways: bigger player tags (there is room for them) */
+body.landscapeLayout .playerIndicator{ height:30px !important; min-width:40px; padding:0 12px; border-radius:15px !important; font-size:15px !important; }
