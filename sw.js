@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.4.8 — Real manifest; home screen full screen like Bible Bridge
+// Version: v14.4.9 — Fix taps landing above buttons: screen setting no longer switched
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.4.8';
+const CACHE_NAME = 'tx-dom-v14.4.9';
 const urlsToCache = [
   './index.html',
   './sw.js',
