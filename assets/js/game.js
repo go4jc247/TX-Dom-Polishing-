@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.5.1'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.5.2'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -12322,8 +12322,12 @@ function _updateEdgeTest(){
   var t = parseFloat(cs.paddingTop) || 0, b = parseFloat(cs.paddingBottom) || 0; probe.remove();
   box.textContent = 'screen ' + screen.width + 'x' + screen.height + '  inner ' + innerWidth + 'x' + innerHeight +
     '  dvh ' + (dv ? Math.round(dv.getBoundingClientRect().height) : '?') + '  lvh ' + (lv ? Math.round(lv.getBoundingClientRect().height) : '?') +
-    '  safe t' + Math.round(t) + ' b' + Math.round(b) + '  app ' + (navigator.standalone ? 'yes' : 'no') + '  ' + (typeof MP_VERSION !== 'undefined' ? MP_VERSION : '');
+    '  safe t' + Math.round(t) + ' b' + Math.round(b) + '  app ' + (navigator.standalone ? 'yes' : 'no') + '  ' + (typeof MP_VERSION !== 'undefined' ? MP_VERSION : '') +
+    '  scroll ' + Math.round(window.scrollY || 0) + '/' + Math.round((document.scrollingElement || document.documentElement).scrollTop) +
+    '  insT ' + (_safeInsets ? Math.round(_safeInsets.t) : '?') + '  table ' + Math.round(getRect().top) + '..' + Math.round(getRect().bottom) +
+    '  vv ' + (window.visualViewport ? Math.round(visualViewport.offsetTop) + '/' + Math.round(visualViewport.height) : '?');
 }
+setInterval(_updateEdgeTest, 1500);
 setTimeout(_updateEdgeTest, 800);
 window.addEventListener('resize', function(){ setTimeout(_updateEdgeTest, 400); });
 

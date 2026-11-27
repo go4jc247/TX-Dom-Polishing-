@@ -2113,3 +2113,8 @@ html, body{ height:100% !important; height:100lvh !important; overflow:hidden !i
 #edgeTestLvh{ display:none !important; }
 html.onHome #edgeTestLvh{ display:block !important; visibility:visible !important; position:absolute; left:0; right:0; width:auto;
   top:0; height:100lvh; border-bottom:5px solid #22ff66; box-sizing:border-box; z-index:3001; pointer-events:none; }
+
+/* v14.5.2 TEMPORARY: readout shown in the game too (over the middle of the table); lines hidden */
+html.onHome #edgeTestPage, html.onHome #edgeTestDvh{ display:none !important; }
+html:not(.onHome) #edgeTestInfo{ display:block; position:absolute; left:20px; right:20px; top:58%; z-index:3002; pointer-events:none;
+  font:600 11px/1.3 ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,0.7); padding:4px 6px; border-radius:6px; text-align:center; }
