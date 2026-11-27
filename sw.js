@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: 14.3.6 — Centre decluttered: played tiles in front of each player, bigger tags
+// Version: v14.3.7 — Landscape: bigger hand to the bottom edge, one-line scores and marks, gaps in trick history
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-14.3.6';
+const CACHE_NAME = 'tx-dom-v14.3.7';
 const urlsToCache = [
   './index.html',
   './sw.js',

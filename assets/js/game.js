@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = '14.3.6'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.3.7'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2054,7 +2054,7 @@ function _landscapePanel(W, H, m, nPlayers, S, nTricks){
   var ins = _getSafeInsets();
   var rect = getRect();
   var pad = Math.max(5, Math.round(m * 0.8));
-  var GAPX = 0.12, GAPY = 0.06;
+  var GAPX = 0.3, GAPY = 0.06;   // v14.3.7: clear gap between players' columns
   // First pass: a provisional width so the score boxes can be measured
   var panelW = Math.max(160, Math.min(260, W * 0.19));
   document.body.style.setProperty('--sidePanelW', (panelW + ins.r) + 'px');
@@ -2062,7 +2062,8 @@ function _landscapePanel(W, H, m, nPlayers, S, nTricks){
   var scoresBottom = tb ? (tb.getBoundingClientRect().bottom - rect.top) : 70;
   var thTop = scoresBottom + Math.round(m / 2);
   var availH = H - thTop - Math.max(ins.b, m);
-  var sth = Math.min((availH - 2 * pad) / (112 * (nTricks + (nTricks - 1) * GAPY)), (panelW - 2 * pad) / (56 * (nPlayers + (nPlayers - 1) * GAPX)), 0.6);
+  var TEAMGAP = 0.45;   // v14.3.7: space between Team 1's tricks (from the top) and Team 2's (from the bottom)
+  var sth = Math.min((availH - 2 * pad) / (112 * (nTricks + (nTricks - 1) * GAPY + TEAMGAP)), (panelW - 2 * pad) / (56 * (nPlayers + (nPlayers - 1) * GAPX)), 0.6);
   var tileW = 56 * sth, tileH = 112 * sth;
   var pitchX = tileW * (1 + GAPX), pitchY = tileH * (1 + GAPY);
   var gridW = tileW + (nPlayers - 1) * pitchX;
@@ -2072,6 +2073,7 @@ function _landscapePanel(W, H, m, nPlayers, S, nTricks){
   S.thTranspose = true; S.thScale = sth;
   S.thBaseX = gridRight / W;                 S.thColSpacing = -pitchX / W;
   S.thBaseY = (thTop + pad + tileH / 2) / H; S.thRowSpacing = pitchY / H;
+  S.thTeamGap = TEAMGAP * tileH / H;
   var th = getSection('Trick_History');
   if(th) th.dominoes.forEach(function(d){ d.rotZ = 0; });
   var bg = document.getElementById('trickHistoryBg');
@@ -2287,17 +2289,25 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   var V = { L: [-B - Ls2 / 2, 0], UL: [-B, -Ry], UR: [B, -Ry], R: [B + Ls2 / 2, 0], LR: [B, Ry], LL: [-B, Ry] };
   var pitchOpp = 56 * sOpp * (1 + OPP_GAP);
   _placeTn51Rows(S, V, cx, cy, sOpp, pitchOpp, n, W, H);
-  S.p1Scale = s1; S.p1Spacing = pitch1 / W;
-  S.p1x = (cx + (n - 1) / 2 * pitch1) / W; S.p1y = edgeY / H;
+  // v14.3.7: your hand keeps its top edge but grows down until it nearly touches the bottom
+  // of the screen. Width is capped so the end tiles stay clear of P2's and P6's rows.
+  var handTop = edgeY - 56 * s1;
+  var sBig = (H - 2 - handTop) / 112;
+  var sideRoom = B + 0.6 * Ls2 / 2 - 2.0 * w;          // half-width free below the bottom corners
+  var sWide = (2 * sideRoom) / (56 * (n + (n - 1) * GAP1));
+  var sHand = Math.max(s1, Math.min(sBig, sWide, 1.6));
+  var pitchH = 56 * sHand * (1 + GAP1), handWH = (n - 1) * pitchH + 56 * sHand;
+  S.p1Scale = sHand; S.p1Spacing = pitchH / W;
+  S.p1x = (cx + (n - 1) / 2 * pitchH) / W; S.p1y = (handTop + 56 * sHand) / H;
 
   // 4+5. Tags and played tiles in front of each row; LEAD alone in the middle
   var sPlay = _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls2, Ry, depth, sOpp, Ry - 56 * s1, 30, 54);
 
   // Status line lives in the bottom-left corner; keep it clear of P2's row and your hand
-  var statusMax = Math.max(120, cx - B - Ls2 / 4 - ins.l - 12);
+  var statusMax = Math.max(120, Math.min(cx - B - Ls2 / 4, cx - handWH / 2) - ins.l - 12);
   document.body.style.setProperty('--statusMaxW', Math.round(statusMax) + 'px');
 
-  _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: true, B: B, Ls: Ls2, Ry: Ry, sOpp: sOpp, s1: s1, sPlay: sPlay, cx: cx, cy: cy };
+  _tn51LastGeom = window._tn51LastGeom = { W: W, H: H, landscape: true, B: B, Ls: Ls2, Ry: Ry, sOpp: sOpp, s1: sHand, sPlay: sPlay, cx: cx, cy: cy };
   return _tn51LastGeom;
 }
 
@@ -6667,7 +6677,9 @@ function getTrickHistoryPosition(teamTrickIndex, winningTeam, playerRowIndex){
   const index = row * numCols + col;
   const d = section.dominoes[index];
   if(!d) return null;
-  const px = normToPx(d.xN, d.yN);
+  // v14.3.7: sideways, Team 2's group sits a little lower so the two teams never touch
+  const _teamGap = (_thS && _thS.thTranspose && winningTeam !== 0) ? (_thS.thTeamGap || 0) : 0;
+  const px = normToPx(d.xN, d.yN + _teamGap);
   return { x: px.x - 28, y: px.y - 56, s: d.scale, rz: d.rotZ, ry: d.rotY };
 }
 

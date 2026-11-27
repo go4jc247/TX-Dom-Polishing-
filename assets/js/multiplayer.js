@@ -10,7 +10,7 @@ function mpPlayerCount(){ return GAME_MODE === 'MOON' ? 3 : (GAME_MODE === 'T42'
 function mpMaxPip(){ return GAME_MODE === 'T42' || GAME_MODE === 'MOON' ? 6 : 7; }
 function mpHandSize(){ return GAME_MODE === 'T42' || GAME_MODE === 'MOON' ? 7 : 6; }
 const MP_WS_URL = 'wss://tn51-tx42-relay.onrender.com';  // V10_122: PRODUCTION
-const MP_VERSION = '14.3.6';  // 14.3.6: Centre decluttered: played tiles in front of each player, bigger tags
+const MP_VERSION = 'v14.3.7';  // v14.3.7: Landscape: bigger hand to the bottom edge, one-line scores and marks, gaps in trick history
 
 // ═══════════════════════════════════════════════════════════════
 // V10_FIX: Multiplayer Sync Fix Variables

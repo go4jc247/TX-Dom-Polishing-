@@ -1906,3 +1906,22 @@ body:not(.landscapeLayout) #boneyardPanel{ display:none !important; }
 
 /* v14.3.6 sideways: bigger player tags (there is room for them) */
 body.landscapeLayout .playerIndicator{ height:30px !important; min-width:40px; padding:0 12px; border-radius:15px !important; font-size:15px !important; }
+
+/* v14.3.7: landscape side panel — both scores on one line, marks on one line */
+body.landscapeLayout #topRow{ display:grid !important; grid-template-columns:1fr 1fr; gap:3px; }
+body.landscapeLayout #topbar .scorePill{ flex-direction:row !important; flex-wrap:wrap; align-items:baseline !important;
+  justify-content:space-between !important; min-width:0 !important; padding:3px 7px !important; column-gap:4px; }
+body.landscapeLayout #topbar .scoreLabel{ font-size:10px; }
+body.landscapeLayout #topbar .scoreValue{ font-size:16px; margin:0 !important; line-height:1; }
+body.landscapeLayout #topbar .scoreBar{ flex:1 1 100%; margin-top:3px; }
+body.landscapeLayout #topbar .marksPill{ grid-column:1 / -1; flex-direction:row !important; justify-content:space-between !important;
+  align-items:center !important; padding:2px 7px !important; min-width:0 !important; gap:6px; }
+body.landscapeLayout #topbar .marksLabel{ margin:0 !important; }
+body.landscapeLayout #topbar .marksDisplay{ flex:1; justify-content:space-around; gap:6px; }
+body.landscapeLayout #topbar .tallyCanvas{ height:12px; }
+body.landscapeLayout #topbar .scorePill{ flex-wrap:nowrap !important; position:relative; padding-bottom:6px !important; }
+body.landscapeLayout #topbar .scoreLabel{ overflow:hidden; text-overflow:clip; }
+body.landscapeLayout #topbar .scoreBar{ position:absolute; left:7px; right:7px; bottom:3px; width:auto; margin:0; }
+body.landscapeLayout #topbar .scorePill{ padding-left:5px !important; padding-right:5px !important; column-gap:3px; }
+body.landscapeLayout #topbar .scoreLabel{ font-size:9px; letter-spacing:0; overflow:visible; flex:0 0 auto; }
+body.landscapeLayout #topbar .scoreValue{ font-size:15px; }
