@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.5.4'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.5.5'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -5281,18 +5281,13 @@ let PLAY_ORDER = [1, 2, 3, 4, 5, 6];
 // Draw tally marks on a canvas (max 15 marks = 3 groups of 5)
 // Hand-drawn style with slight variations - RIGHT ALIGNED
 // Groups fill from right to left, but lines within each group draw left-to-right
-// v14.5.4: bold, crisp tally marks (drawn at the screen's pixel density), each team's marks
-// pushed to the outside of the Marks box: Team 1 from the left edge, Team 2 from the right edge.
+// v14.5.5: tally marks fill the height of the Marks box (original 2px strokes and colours, drawn
+// sharp at the screen's pixel density); Team 1's from the left edge, Team 2's from the right edge.
 function drawTallyMarks(canvas, count, teamColor, align){
   align = align || 'right';
   const dpr = window.devicePixelRatio || 1;
-  const land = document.body.classList.contains('landscapeLayout');
-  const rowH = land ? 18 : 26;                       // CSS px per row of marks
-  const rowCapacity = 15;
-  const numRows = Math.max(1, Math.ceil(count / rowCapacity));
-  const cssW = Math.max(40, Math.round(canvas.clientWidth || canvas.parentElement && canvas.parentElement.clientWidth || 80));
-  const cssH = numRows * rowH;
-  canvas.style.height = cssH + 'px';
+  const cssW = Math.max(40, Math.round(canvas.clientWidth || 80));
+  const cssH = Math.max(12, Math.round(canvas.clientHeight || 24));
   if(canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)){
     canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
   }
@@ -5300,6 +5295,7 @@ function drawTallyMarks(canvas, count, teamColor, align){
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
   if(count <= 0) return;
+  const rowCapacity = 15, numRows = Math.ceil(count / rowCapacity), rowH = cssH / numRows;
   for(let row = 0; row < numRows; row++){
     const rowCount = (row < numRows - 1) ? rowCapacity : (count - row * rowCapacity);
     _drawTallyRow(ctx, cssW, rowH, row * rowH, rowCount, teamColor, align);
@@ -5307,30 +5303,21 @@ function drawTallyMarks(canvas, count, teamColor, align){
 }
 
 function _drawTallyRow(ctx, w, h, yOffset, count, teamColor, align){
-  const lineHeight = h * 0.8;
-  const lineWidth = h >= 24 ? 3.6 : 2.8;
-  const gap = h >= 24 ? 7 : 5.5;          // between strokes in a group
-  const groupGap = h >= 24 ? 11 : 8;      // between groups of five
+  const lineHeight = h * 0.86;
+  const lineWidth = 2;
+  const gap = 5, groupGap = 8;              // original spacing
   const groups = Math.floor(count / 5), rem = count % 5;
-  // total width, so the marks can sit against either edge
   const total = groups * 4 * gap + rem * gap + Math.max(0, groups - 1 + (groups && rem ? 1 : 0)) * groupGap;
-  const pad = 3;
-  // strokes are laid out left to right, oldest first
-  let x = (align === 'left') ? pad + lineWidth / 2 : (w - pad - lineWidth / 2 - Math.max(0, total - gap));
+  const pad = 2;
+  let x = (align === 'left') ? pad + 1 : (w - pad - 1 - Math.max(0, total - gap));
   const cy = yOffset + h / 2;
-  function stroke(x1, y1, x2, y2){
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = lineWidth + 2;  // dark outline for contrast
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.strokeStyle = teamColor; ctx.lineWidth = lineWidth;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  }
+  ctx.strokeStyle = teamColor; ctx.lineWidth = lineWidth; ctx.lineCap = 'round';
+  function stroke(x1, y1, x2, y2){ ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
   function jit(v){ return (Math.random() - 0.5) * v; }
   for(let g = 0; g < groups; g++){
     const startX = x;
     for(let i = 0; i < 4; i++){ const xx = x + jit(0.8); stroke(xx, cy - lineHeight / 2 + jit(1.2), xx + jit(0.8), cy + lineHeight / 2 + jit(1.2)); x += gap; }
-    const endX = x - gap;
-    stroke(startX - 2, cy + lineHeight / 2 - 2, endX + 2, cy - lineHeight / 2 + 2);   // the fifth, across
+    stroke(startX - 1, cy + lineHeight / 2 - 3, x - gap + 1, cy - lineHeight / 2 + 3);   // the fifth, across
     x += groupGap - gap;
   }
   for(let i = 0; i < rem; i++){ const xx = x + jit(0.8); stroke(xx, cy - lineHeight / 2 + jit(1.2), xx + jit(0.8), cy + lineHeight / 2 + jit(1.2)); x += gap; }
@@ -5384,8 +5371,8 @@ function updateScoreDisplay(){
   // Update tally marks
   const canvas1 = document.getElementById('tallyCanvas1');
   const canvas2 = document.getElementById('tallyCanvas2');
-  drawTallyMarks(canvas1, team1Marks, '#60a5fa', 'left');   // Team 1 (blue) from the left edge
-  drawTallyMarks(canvas2, team2Marks, '#f87171', 'right');  // Team 2 (red) from the right edge
+  drawTallyMarks(canvas1, team1Marks, 'rgba(59,130,246,0.9)', 'left');   // Team 1 (blue) from the left edge
+  drawTallyMarks(canvas2, team2Marks, 'rgba(239,68,68,0.9)', 'right');   // Team 2 (red) from the right edge
 }
 // v14.5.4: marks are sized to their box, so redraw them when the layout changes
 window.addEventListener('resize', function(){ clearTimeout(window._marksRedraw); window._marksRedraw = setTimeout(function(){ try { updateScoreDisplay(); } catch(e){} }, 450); });

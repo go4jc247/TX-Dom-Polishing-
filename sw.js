@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.5.4 — Bold marks pushed to the outside; trump square top-left
+// Version: v14.5.5 — Marks fill the box height with the original stroke weight
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.5.4';
+const CACHE_NAME = 'tx-dom-v14.5.5';
 const urlsToCache = [
   './index.html',
   './sw.js',

@@ -2100,7 +2100,13 @@ html, body{ height:100% !important; height:100lvh !important; overflow:hidden !i
 #startScreenBackdrop{ position:absolute !important; top:0 !important; left:0 !important; right:0 !important;
   bottom:auto !important; height:100vh !important; height:100lvh !important; }
 #gameSelectScreen{ position:absolute !important; height:100vh !important; height:100lvh !important; }
-/* v14.5.4: each team's marks fill half the Marks box, pushed to the outside edges */
-#topbar .marksDisplay{ display:flex !important; width:100%; justify-content:space-between !important; gap:6px !important; }
+/* v14.5.5: the marks fill the full height of the Marks box (upright: drawn over the whole box,
+   label stays centred on top); each team's half pushed to its outside edge */
+#topbar .marksDisplay{ display:flex !important; justify-content:space-between !important; gap:6px !important; }
 #topbar .tallyGroup{ flex:1 1 0; min-width:0; display:flex; }
-#topbar .tallyCanvas{ width:100% !important; max-width:none !important; display:block; }
+#topbar .tallyCanvas{ width:100% !important; max-width:none !important; height:100% !important; display:block; }
+body:not(.landscapeLayout) #topbar #marksPill{ position:relative; }
+body:not(.landscapeLayout) #topbar #marksPill .marksDisplay{ position:absolute; top:4px; bottom:4px; left:8px; right:8px; }
+body:not(.landscapeLayout) #topbar #marksPill .marksLabel{ position:relative; z-index:1; }
+body.landscapeLayout #topbar .marksDisplay{ align-self:stretch; }
+body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
