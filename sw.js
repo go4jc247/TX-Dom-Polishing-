@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.5.0 — Extra room under the clock; temporary bottom-edge test on the home screen
+// Version: v14.5.1 — Game and home screen sized to the full screen height (100lvh)
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.5.0';
+const CACHE_NAME = 'tx-dom-v14.5.1';
 const urlsToCache = [
   './index.html',
   './sw.js',

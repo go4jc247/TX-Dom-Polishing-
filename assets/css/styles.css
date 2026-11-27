@@ -2096,3 +2096,20 @@ html.onHome #edgeTestDvh{ display:block; position:fixed; left:30%; right:30%; to
 html.onHome #edgeTestLvh{ display:block; position:fixed; left:0; width:1px; top:0; height:100lvh; visibility:hidden; pointer-events:none; }
 html.onHome #edgeTestInfo{ display:block; position:fixed; left:60px; right:60px; top:calc(env(safe-area-inset-top) + 14px); z-index:3002; pointer-events:none;
   font:600 11px/1.3 ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,0.55); padding:4px 6px; border-radius:6px; text-align:center; }
+
+/* ============================================================
+   v14.5.1: iPhone home-screen app: iOS gives the page 797 of the screen's 844pt (lvh = 844).
+   Elements pinned with position:fixed are clipped at 797 (the bar under the hand), but normal
+   page content draws all the way down (as Bible Bridge's does). So the full-screen layers are
+   placed in the page (position:absolute) and sized to the full screen height (100lvh).
+   ============================================================ */
+html, body{ height:100% !important; height:100lvh !important; overflow:hidden !important; }
+#viewportWrapper{ position:absolute !important; top:0 !important; left:0 !important; right:0 !important;
+  bottom:auto !important; height:100% !important; height:100lvh !important; }
+#startScreenBackdrop{ position:absolute !important; top:0 !important; left:0 !important; right:0 !important;
+  bottom:auto !important; height:100vh !important; height:100lvh !important; }
+#gameSelectScreen{ position:absolute !important; height:100vh !important; height:100lvh !important; }
+/* TEMPORARY test: green line at the bottom of a full-screen (100lvh) box placed in the page */
+#edgeTestLvh{ display:none !important; }
+html.onHome #edgeTestLvh{ display:block !important; visibility:visible !important; position:absolute; left:0; right:0; width:auto;
+  top:0; height:100lvh; border-bottom:5px solid #22ff66; box-sizing:border-box; z-index:3001; pointer-events:none; }
