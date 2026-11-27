@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.3.5 — player tags, sideways boneyard drawer, popups centred on the table
+// Version: 14.3.6 — Centre decluttered: played tiles in front of each player, bigger tags
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.3.5';
+const CACHE_NAME = 'tx-dom-14.3.6';
 const urlsToCache = [
   './index.html',
   './sw.js',
