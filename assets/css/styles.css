@@ -2061,14 +2061,23 @@ body.p4Down #placeholder-p4{ visibility:hidden; }
    colour: match the table's darkened bottom edge so it blends. (v14.4.3's stretch was reverted:
    iOS clips the page at the strip, so stretching cut off the hand.) */
 /* v14.4.5: upright, iOS paints the band behind the clock with this colour: match the table's top edge */
-html:not(.onHome), html:not(.onHome) body{ background:color-mix(in srgb, var(--feltB, #0f6e2a) 90%, #000) !important; }
+html:not(.onHome), html:not(.onHome) body{ background:var(--topC) !important; }
 /* v14.4.5: iOS 27 home-screen apps: a fixed, coloured element at the very top (>= 6px tall, >= 80%
    wide, within 4px of the top) makes the status bar take its colour and stay solid, with no blur
    (modernwebweekly "So what's up with the iOS 27 blur"). Table green in the game, blue at home. */
+/* v14.4.6: one colour (--topC) for the top pixel line, the status bar and the page behind it; the
+   table fades from it into the felt over the top ~1in (96px) */
+:root{ --topC: color-mix(in srgb, var(--feltB, #0f6e2a) 90%, #000); }
 #statusTint{ display:none; }
 @media (orientation: portrait){
-  #statusTint{ display:block; position:fixed; top:0; left:0; right:0; height:8px; z-index:90; pointer-events:none;
-    background:color-mix(in srgb, var(--feltB, #0f6e2a) 90%, #000); }
+  #statusTint{ display:block; position:fixed; top:0; left:0; right:0; height:6px; z-index:90; pointer-events:none;
+    background:var(--topC); }
+  html:not(.onHome) #tableMain{
+    background:
+      linear-gradient(to bottom, var(--topC) 0, var(--topC) 6px, transparent 96px),
+      radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.08) 45%, rgba(0,0,0,0.32) 100%),
+      radial-gradient(circle at 50% 35%, var(--feltA) 0%, var(--feltB) 55%, var(--feltC) 100%) !important;
+  }
   html.onHome #statusTint{ background:#0a3e8a; z-index:1150; }
 }
 html.onHome, html.onHome body{ background:#0a3e8a !important; }
