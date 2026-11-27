@@ -29,7 +29,7 @@
 })();
 </script>
 <style>
-/* v14.1.0: "Update available" prompt */
+/* v14.1.0: "Update available" prompt (v14.1.1: also used for Check for Updates) */
 #updatePrompt{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);
   width:min(92vw,380px);z-index:100000;display:none;background:#1e3a8a;color:#fff;border-radius:18px;
   box-shadow:0 10px 30px rgba(0,0,0,0.45);padding:18px 18px 16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
@@ -42,51 +42,82 @@
 #updateLaterBtn{background:rgba(255,255,255,0.18);}
 </style>
 <script>
-// v14.1.0: check for updates and ask the player before switching to the new version.
-// The service worker installs a new version in the background and waits; the prompt
-// tells it to take over, then the page reloads once.
+// v14.1.1: check for updates only when the app starts, or when the player taps
+// "Check for Updates" in the settings menu. Never pops up in the middle of a game.
+var _swReg = null;
+function _onStartScreen() {
+  var sb = document.getElementById('startScreenBackdrop');
+  return !sb || getComputedStyle(sb).display !== 'none';
+}
+function _showUpdateBox(mode, worker) {
+  var box = document.getElementById('updatePrompt'); if (!box) return;
+  var title = document.getElementById('updateTitle'), msg = document.getElementById('updateMsg');
+  var now = document.getElementById('updateNowBtn'), later = document.getElementById('updateLaterBtn');
+  now.textContent = 'Update'; later.textContent = 'Later'; now.style.display = ''; now.disabled = false;
+  if (mode === 'update') {
+    title.textContent = 'Update available';
+    msg.textContent = 'A new version of the game is ready. Would you like to update now? The app will restart.';
+    now.onclick = function() { now.textContent = 'Updating...'; now.disabled = true; worker.postMessage({ type: 'SKIP_WAITING' }); };
+  } else if (mode === 'checking') {
+    title.textContent = 'Checking for updates...'; msg.textContent = 'One moment.';
+    now.style.display = 'none'; later.textContent = 'Close';
+  } else {
+    var v = (typeof GAME_VERSION !== 'undefined') ? GAME_VERSION : '';
+    title.textContent = mode === 'current' ? "You're up to date" : 'Could not check';
+    msg.textContent = mode === 'current' ? ('You have the latest version' + (v ? ' (' + v + ')' : '') + '.')
+                                         : 'Could not reach the server. Check your connection and try again.';
+    now.style.display = 'none'; later.textContent = 'OK';
+  }
+  later.onclick = function() { box.classList.remove('show'); };
+  box.classList.add('show');
+}
+function _waitForInstalled(worker, cb) {
+  if (worker.state === 'installed') return cb(true);
+  worker.addEventListener('statechange', function() {
+    if (worker.state === 'installed') cb(true);
+    else if (worker.state === 'redundant') cb(false);
+  });
+}
+// Called by the "Check for Updates" menu item
+function checkForUpdatesNow() {
+  var menu = document.getElementById('settingsMenu'); if (menu) menu.classList.remove('open');
+  if (!_swReg) { _showUpdateBox('error'); return; }
+  _showUpdateBox('checking');
+  _swReg.update().then(function() {
+    var w = _swReg.waiting || _swReg.installing;
+    if (!w) { _showUpdateBox('current'); return; }
+    _waitForInstalled(w, function(ok) {
+      if (ok && _swReg.waiting) _showUpdateBox('update', _swReg.waiting); else _showUpdateBox('current');
+    });
+  }).catch(function() { _showUpdateBox('error'); });
+}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     var reloading = false;
-    function showUpdatePrompt(worker) {
-      var box = document.getElementById('updatePrompt');
-      if (!box || !worker) return;
-      box.classList.add('show');
-      document.getElementById('updateNowBtn').onclick = function() {
-        this.textContent = 'Updating...';
-        worker.postMessage({ type: 'SKIP_WAITING' });
-      };
-      document.getElementById('updateLaterBtn').onclick = function() {
-        box.classList.remove('show');
-      };
-    }
     navigator.serviceWorker.addEventListener('controllerchange', function() {
-      if (reloading) return;
-      reloading = true;
-      window.location.reload();
+      if (reloading) return; reloading = true; window.location.reload();
     });
     navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
-      if (reg.waiting && navigator.serviceWorker.controller) showUpdatePrompt(reg.waiting);
-      reg.addEventListener('updatefound', function() {
-        var nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', function() {
-          // Only prompt when replacing an older version, not on the very first install
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdatePrompt(nw);
-        });
-      });
-      function check() { reg.update().catch(function(){}); }
-      // Check when the app comes back to the screen, and every 30 minutes while open
-      document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') check(); });
-      setInterval(check, 30 * 60 * 1000);
+      _swReg = reg;
+      // Startup check. Only offer the update on the home screen, never mid-game;
+      // a waiting update is offered again the next time the app starts.
+      function offer(w) { if (navigator.serviceWorker.controller && _onStartScreen()) _showUpdateBox('update', w); }
+      if (reg.waiting) offer(reg.waiting);
+      else if (reg.installing) _waitForInstalled(reg.installing, function(ok){ if (ok && reg.waiting) offer(reg.waiting); });
+      else reg.update().then(function() {
+        var w = reg.installing || reg.waiting; if (!w) return;
+        _waitForInstalled(w, function(ok){ if (ok && reg.waiting) offer(reg.waiting); });
+      }).catch(function(){});
     }).catch(function(){});
   });
+} else {
+  function checkForUpdatesNow() { _showUpdateBox('error'); }
 }
 </script>
 
 <div id="updatePrompt" role="dialog" aria-live="polite" aria-labelledby="updateTitle">
   <h3 id="updateTitle">Update available</h3>
-  <p>A new version of the game is ready. Would you like to update now? The app will restart.</p>
+  <p id="updateMsg">A new version of the game is ready. Would you like to update now? The app will restart.</p>
   <div class="upBtns"><button type="button" id="updateLaterBtn">Later</button><button type="button" id="updateNowBtn">Update</button></div>
 </div>
 <div id="viewportWrapper">
@@ -310,6 +341,7 @@ if ('serviceWorker' in navigator) {
   <div class="settingsItem" id="menuChangeName">Change Name</div>
   <div class="settingsDivider"></div>
   <div class="settingsItem" id="menuAbout">About</div>
+  <div class="settingsItem" id="menuCheckUpdates" onclick="checkForUpdatesNow()">Check for Updates</div>
 </div>
 
 
@@ -322,7 +354,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div style="text-align:center;">
       <div style="font-size:24px;font-weight:800;color:#fff;margin-bottom:4px;">TN51 / TX42 Dominoes</div>
-      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.1.0</div>
+      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.1.1</div>
       <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
         <div>Built: February 2026</div>
         <div>Game modes: Tennessee 51, Texas 42</div>

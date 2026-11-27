@@ -550,6 +550,7 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     border: 1px solid rgba(255,255,255,0.2);
     box-sizing: border-box;
+    position: relative; /* v14.1.1: keeps close buttons on the window, not the screen corner */
   }
   .modalHeader{
     padding:8px 12px;
@@ -1418,11 +1419,13 @@
   #bgmTrackList::-webkit-scrollbar{ width:4px; }
   #bgmTrackList::-webkit-scrollbar-thumb{ background:#555;border-radius:2px; }
   .modalCloseBtn{
-    position:absolute;
-    top:10px;
-    right:10px;
-    width:30px;
-    height:30px;
+    /* v14.1.1: sits in the window's header row (was pinned to the screen's top corner,
+       next to the iPhone battery icon). Bigger tap target. */
+    position:static;
+    flex:0 0 auto;
+    margin-left:8px;
+    width:40px;
+    height:40px;
     border:none;
     background:rgba(255,255,255,0.1);
     border-radius:50%;
@@ -1743,3 +1746,11 @@
 #exportAllBtn { color:#0f0 !important; border-color:rgba(0,255,0,0.3) !important; }
 #shuffleSettingsBtn { color:#ff0 !important; border-color:rgba(255,255,0,0.3) !important; }
 
+
+/* v14.1.1: bigger tap targets for the small close (x) buttons built inline */
+#aboutCloseBtn, #ppCloseBtn, #mpCloseBtn, #ziCloseBtn, #shufflePanelClose, .modalHeader .closeBtn{
+  min-width:40px; min-height:40px; display:inline-flex; align-items:center; justify-content:center;
+  font-size:24px !important;
+}
+/* v14.1.1: menu windows open on top of the bid/trump boxes so their close (x) can be tapped */
+#mcBackdrop, #notesBackdrop, #gameLogBackdrop, #advLogBackdrop{ z-index:2000; }

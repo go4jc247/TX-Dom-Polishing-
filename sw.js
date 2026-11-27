@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.1.0 — asks the player before updating (no automatic skipWaiting)
+// Version: v14.1.1 — update check on start and from the menu; close buttons on their windows
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.1.0';
+const CACHE_NAME = 'tx-dom-v14.1.1';
 const urlsToCache = [
   './index.html',
   './sw.js',
@@ -66,8 +66,15 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // v14.1.1: ask the server whether our own files changed (cheap 304 when not), so an
+  // update never mixes a new page with old scripts from the browser's HTTP cache.
+  const req = e.request;
+  const sameOrigin = new URL(req.url).origin === self.location.origin;
+  const net = req.mode === 'navigate' ? fetch(req.url, { cache: 'no-cache' })
+            : sameOrigin && req.method === 'GET' ? fetch(req, { cache: 'no-cache' })
+            : fetch(req);
   e.respondWith(
-    fetch(e.request)
+    net
       .then(r => { const rc = r.clone(); caches.open(CACHE_NAME).then(c => c.put(e.request, rc)); return r; })
       .catch(() => caches.match(e.request))
   );
