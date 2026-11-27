@@ -2175,7 +2175,10 @@ function _placeTn51Rows(S, V, cx, cy, sOpp, pitchOpp, n, W, H){
 //   bottomInner centre to the inner face of whatever sits on the bottom edge (your hand
 //               sideways; nothing upright, so the edge itself)
 //   cluster     true: played tiles grouped around LEAD (upright, where the table is narrow)
-function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner, TAGH, TAGW, cluster){
+//   opts        { leadMid: LEAD halfway between your tag and P4's (sideways), minPlay: smallest
+//               played-tile scale allowed, dryRun: only report the size, change nothing }
+function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner, TAGH, TAGW, cluster, opts){
+  opts = opts || {};
   var GAPT = 8, LEADW = 44, LEADH = 62;
   var nrm = { 2: [-0.866, 0.5], 3: [-0.866, -0.5], 5: [0.866, -0.5], 6: [0.866, 0.5] };
   var mids = { 2: [-B - Ls / 4, Ry / 2], 3: [-B - Ls / 4, -Ry / 2], 5: [B + Ls / 4, -Ry / 2], 6: [B + Ls / 4, Ry / 2] };
@@ -2194,15 +2197,16 @@ function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner,
     }
     t[4] = [0, -Ry + depth / 2 + GAPT + TAGH / 2];  o[4] = [0, -Ry + depth / 2 + GAPT + TAGH + GAPT + hh];
     t[1] = [0, bottomInner - GAPT - TAGH / 2];       o[1] = [0, bottomInner - GAPT - TAGH - GAPT - hh];
+    var ly = opts.leadMid ? (t[1][1] + t[4][1]) / 2 : 0;
     if(cluster){
       var sx = LEADW / 2 + GAPT + hw, sy = hh + GAPT / 2, vy = LEADH / 2 + GAPT + hh;
-      o = { 1: [0, vy], 4: [0, -vy], 2: [-sx, sy], 3: [-sx, -sy], 5: [sx, -sy], 6: [sx, sy] };
+      o = { 1: [0, ly + vy], 4: [0, ly - vy], 2: [-sx, ly + sy], 3: [-sx, ly - sy], 5: [sx, ly - sy], 6: [sx, ly + sy] };
     }
-    return { tiles: o, tags: t, hw: hw, hh: hh };
+    return { tiles: o, tags: t, hw: hw, hh: hh, ly: ly };
   }
   function hit(a, b){ return Math.abs(a.x - b.x) * 2 < a.w + b.w - 1 && Math.abs(a.y - b.y) * 2 < a.h + b.h - 1; }
   function fits(sp){
-    var L = spots(sp), bx = [{ n: 'LEAD', x: 0, y: 0, w: LEADW + GAPT, h: LEADH + GAPT }];
+    var L = spots(sp), bx = [{ n: 'LEAD', x: 0, y: L.ly, w: LEADW + GAPT, h: LEADH + GAPT }];
     for(var q = 1; q <= 6; q++){
       bx.push({ n: 'tile' + q, x: L.tiles[q][0], y: L.tiles[q][1], w: 2 * L.hw + GAPT, h: 2 * L.hh + GAPT });
       bx.push({ n: 'tag' + q, x: L.tags[q][0], y: L.tags[q][1], w: TAGW + GAPT, h: TAGH + GAPT });
@@ -2210,30 +2214,32 @@ function _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls, Ry, depth, sOpp, bottomInner,
     for(var i = 0; i < bx.length; i++) for(var j = i + 1; j < bx.length; j++) if(hit(bx[i], bx[j])) return false;
     return true;
   }
-  var sPlay = 1.3 * sOpp;
-  while(sPlay > 0.5 * sOpp && !fits(sPlay)) sPlay -= 0.01;
+  var sPlay = 1.3 * sOpp, sMin = opts.minPlay || 0.5 * sOpp;
+  while(sPlay > sMin && !fits(sPlay)) sPlay -= 0.01;
+  if(opts.dryRun) return fits(sPlay) ? sPlay : -1;
   var LP = spots(sPlay);
   for(var q2 = 1; q2 <= 6; q2++){
     S['p' + q2 + 'TrickX'] = (cx + LP.tiles[q2][0]) / W; S['p' + q2 + 'TrickY'] = (cy + LP.tiles[q2][1]) / H;
     S['ind' + q2 + 'x'] = (cx + LP.tags[q2][0]) / W;     S['ind' + q2 + 'y'] = (cy + LP.tags[q2][1]) / H;
   }
-  S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = cy / H;
+  S.trickScale = sPlay; S.leadScale = sPlay; S.leadX = cx / W; S.leadY = (cy + LP.ly) / H;
   // v14.4.0: the trump marker (34px square + TRUMP label) sits next to the play: the first free
   // spot among the cluster's corners, then beside your tag
-  var TW = 34, TH = 34 + 13, used = [{ x: 0, y: 0, w: LEADW + GAPT, h: LEADH + GAPT }];
+  var TW = 34, TH = 34 + 13, used = [{ x: 0, y: LP.ly, w: LEADW + GAPT, h: LEADH + GAPT }];
   for(var u = 1; u <= 6; u++){
     used.push({ x: LP.tiles[u][0], y: LP.tiles[u][1], w: 2 * LP.hw + GAPT, h: 2 * LP.hh + GAPT });
     used.push({ x: LP.tags[u][0], y: LP.tags[u][1], w: TAGW + GAPT, h: TAGH + GAPT });
   }
-  var cxT = LP.tiles[6][0] + LP.hw + GAPT + TW / 2, cyT = Math.max(Math.abs(LP.tiles[1][1]), LEADH / 2 + GAPT + TH / 2);
-  var cand = [[-cxT, cyT], [cxT, cyT], [-cxT, -cyT], [cxT, -cyT],
+  var cxT = LP.tiles[6][0] + LP.hw + GAPT + TW / 2, cyT = Math.max(Math.abs(LP.tiles[1][1] - LP.ly), LEADH / 2 + GAPT + TH / 2);
+  var cand = [[-cxT, LP.ly + cyT], [cxT, LP.ly + cyT], [-cxT, LP.ly - cyT], [cxT, LP.ly - cyT],
               [-(TAGW / 2 + GAPT + TW / 2), LP.tags[1][1] + 6], [TAGW / 2 + GAPT + TW / 2, LP.tags[1][1] + 6]];
-  var tp = cand[cand.length - 2];
+  var tp = null;      // no free spot (very small screens): it stays under the menu button
   for(var ci = 0; ci < cand.length; ci++){
     var tb = { x: cand[ci][0], y: cand[ci][1], w: TW + GAPT, h: TH + GAPT };
+    if(cand[ci][1] + TH / 2 + GAPT > bottomInner) continue;      // never on top of your hand
     if(!used.some(function(b){ return hit(tb, b); })){ tp = cand[ci]; break; }
   }
-  _trumpSpot = { left: cx + tp[0] - TW / 2, top: cy + tp[1] - TH / 2 };
+  _trumpSpot = tp ? { left: cx + tp[0] - TW / 2, top: cy + tp[1] - TH / 2 } : null;
   PLACEHOLDER_CONFIG.dominoWidth = Math.round(112 * sPlay);
   PLACEHOLDER_CONFIG.dominoHeight = Math.round(56 * sPlay);
   PLACEHOLDER_CONFIG.leadSize = Math.round(28 * sPlay / 0.393);
@@ -2365,12 +2371,22 @@ function _computeTn51Landscape(rect, W, H, S, n, m){
   var sideRoom = B + 0.6 * Ls2 / 2 - 2.0 * w;          // half-width free below the bottom corners
   var sWide = (2 * sideRoom) / (56 * (n + (n - 1) * GAP1));
   var sHand = Math.max(s1, Math.min(sBig, sWide, 1.6));
+  // v14.4.0: played tiles huddle around LEAD, and LEAD sits halfway between your tag and P4's.
+  // That frees the middle, so your hand grows upward (bottom stays on the screen edge) as far as
+  // the cluster still fits with played tiles at least 1.15x the other players' tiles.
+  var minPlay = 1.15 * sOpp, sTry = Math.min(sWide, 1.6, 0.42 * H / 112);
+  while(sTry > sHand){
+    var topTry = H - 2 - 112 * sTry;
+    if(_tn51TagsAndPlays(S, W, H, cx, cy, B, Ls2, Ry, depth, sOpp, topTry - cy, 30, 54, true, { leadMid: true, minPlay: minPlay, dryRun: true }) > 0) break;
+    sTry -= 0.02;
+  }
+  if(sTry > sHand){ sHand = sTry; handTop = H - 2 - 112 * sHand; }
   var pitchH = 56 * sHand * (1 + GAP1), handWH = (n - 1) * pitchH + 56 * sHand;
   S.p1Scale = sHand; S.p1Spacing = pitchH / W;
   S.p1x = (cx + (n - 1) / 2 * pitchH) / W; S.p1y = (handTop + 56 * sHand) / H;
 
-  // 4+5. Tags and played tiles in front of each row; LEAD alone in the middle
-  var sPlay = _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls2, Ry, depth, sOpp, Ry - 56 * s1, 30, 54);
+  // 4+5. Tags in front of each row; played tiles clustered around LEAD
+  var sPlay = _tn51TagsAndPlays(S, W, H, cx, cy, B, Ls2, Ry, depth, sOpp, handTop - cy, 30, 54, true, { leadMid: true });
 
   // Status line lives in the bottom-left corner; keep it clear of P2's row and your hand
   var statusMax = Math.max(120, Math.min(cx - B - Ls2 / 4, cx - handWH / 2) - ins.l - 20);
