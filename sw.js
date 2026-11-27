@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.5.2 — Temporary readout in the game to diagnose the top
+// Version: v14.5.3 — Remove test markers; re-check the clock height after launch
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.5.2';
+const CACHE_NAME = 'tx-dom-v14.5.3';
 const urlsToCache = [
   './index.html',
   './sw.js',

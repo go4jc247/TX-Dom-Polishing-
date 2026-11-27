@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.5.2'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.5.3'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -12311,25 +12311,18 @@ setTimeout(_updateLandscapeClock, 500);
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
-// v14.5.0 TEMPORARY test markers on the home screen (owner's iPhone check of the bottom bar):
-// yellow line = where the page ends (bottom:0), red line = bottom of a 100dvh box, plus numbers.
-function _updateEdgeTest(){
-  var box = document.getElementById('edgeTestInfo'); if(!box) return;
-  var dv = document.getElementById('edgeTestDvh'), lv = document.getElementById('edgeTestLvh');
-  var probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0';
-  document.body.appendChild(probe); var cs = getComputedStyle(probe);
-  var t = parseFloat(cs.paddingTop) || 0, b = parseFloat(cs.paddingBottom) || 0; probe.remove();
-  box.textContent = 'screen ' + screen.width + 'x' + screen.height + '  inner ' + innerWidth + 'x' + innerHeight +
-    '  dvh ' + (dv ? Math.round(dv.getBoundingClientRect().height) : '?') + '  lvh ' + (lv ? Math.round(lv.getBoundingClientRect().height) : '?') +
-    '  safe t' + Math.round(t) + ' b' + Math.round(b) + '  app ' + (navigator.standalone ? 'yes' : 'no') + '  ' + (typeof MP_VERSION !== 'undefined' ? MP_VERSION : '') +
-    '  scroll ' + Math.round(window.scrollY || 0) + '/' + Math.round((document.scrollingElement || document.documentElement).scrollTop) +
-    '  insT ' + (_safeInsets ? Math.round(_safeInsets.t) : '?') + '  table ' + Math.round(getRect().top) + '..' + Math.round(getRect().bottom) +
-    '  vv ' + (window.visualViewport ? Math.round(visualViewport.offsetTop) + '/' + Math.round(visualViewport.height) : '?');
+// v14.5.3: iOS can report the clock's height as 0 for a moment at launch; if the first reading
+// was wrong the layout kept it (content slid up under the clock). Re-check shortly after launch
+// and whenever the app comes back to the front, and lay out again if it changed.
+function _recheckInsets(){
+  var before = _safeInsets ? _safeInsets.t : null;
+  _safeInsets = null;
+  var now = _getSafeInsets().t;
+  if(before !== null && Math.abs(now - before) > 1) window.dispatchEvent(new Event('resize'));
 }
-setInterval(_updateEdgeTest, 1500);
-setTimeout(_updateEdgeTest, 800);
-window.addEventListener('resize', function(){ setTimeout(_updateEdgeTest, 400); });
+[400, 1200, 3000].forEach(function(ms){ setTimeout(_recheckInsets, ms); });
+window.addEventListener('pageshow', function(){ setTimeout(_recheckInsets, 200); });
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(_recheckInsets, 200); });
 
 // v14.3.8: a 180-degree flip keeps the same size but moves the camera to the other side
 function _onFlip(){ _safeInsets = null; window.dispatchEvent(new Event('resize')); }
