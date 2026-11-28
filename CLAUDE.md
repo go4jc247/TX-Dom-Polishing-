@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.6.5 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.7.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -213,7 +213,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.6.5): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.7.0): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -222,7 +222,7 @@ function _lazyLoad(src, cb) {
    non-camera safe inset; --insL/--insR CSS vars + body.camLeft/camRight. Camera-left strip holds
    compact Menu + trump marker (top) and #landscapeClock (bottom). Test hooks: window._fakeInsets,
    window._fakeCamSide. Trick history: Team 2's first trick snaps to the bottom (S.thTeamGap).
-   Known: T42 landscape centre still crowded (played spots overlap LEAD/tags) - needs the TN51 declutter.
+   (v14.7.0 fixed the old 'T42 landscape centre crowded' issue - see below.)
    v14.4.0 (TN51 only unless noted):
    - Portrait: body.stackTop = menu icon top-right (status beside it), trick history+bones at the
      top, score bar below it (--scoreTop), then the table. T42/Moon portrait unchanged.
@@ -309,6 +309,16 @@ function _lazyLoad(src, cb) {
      a snapshot of DOMINO_STYLE (built-in + old 'tn51_domino_style' saved colours) + old 'tn51_pip_colors',
      taken before the picker applies anything and stored once in 'tn51_domino_original'. Flat face, no
      texture/glow. Not offered as a Custom tile colour (FACES.original.original = true).
+   v14.7.0: TEXAS 42 LAYOUT REBUILT on the TN51 approach (computeT42AutoLayout + _t42Cluster/_t42BestPlay).
+     Upright: body.stackTop like TN51 (menu top-right, 4-row trick history, score bar, trump in the
+     table's top-left corner via _trumpSpot - applyT42Settings now calls _applyTrumpSpot). Sideways:
+     right panel, table up to the BONES tab (22px), P3 row fully on screen (no CUT, no reveal shift
+     needed). Tags hug their own row/column; P2/P4 tags drop below/above the play when level doesn't fit;
+     played tiles packed round LEAD; sizes = biggest with no box touching (8px gaps). Opponent cap grows
+     with screen size (tablets). Sideways the hand keeps >= 0.19H and slides right of centre to clear
+     the bottom-left status line; 568x320 falls back (tiny overlap). _openCenterRect handles T42 so
+     round-end/lay-down boxes sit in the open middle sideways. Tested 375x667, 390x844, 430x932,
+     820x1180 and their sideways sizes + 568x320. TN51 untouched; the two modes still share helpers.
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.

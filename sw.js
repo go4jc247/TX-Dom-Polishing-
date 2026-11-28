@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.6.5 — Original domino style restored in the picker
+// Version: v14.7.0 — Texas 42 layout rebuilt on the TN51 approach
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.6.5';
+const CACHE_NAME = 'tx-dom-v14.7.0';
 const urlsToCache = [
   './index.html',
   './sw.js',

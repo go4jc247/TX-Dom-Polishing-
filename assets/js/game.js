@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.6.5'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.0'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -993,7 +993,17 @@ function _p4RevealShift(on){
 // (inside the players' tags), shrunk to fit if needed, so revealed hands and the trick history
 // stay visible. Upright and on other tables they stay where they were.
 function _openCenterRect(){
-  if(GAME_MODE !== 'TN51' || !document.body.classList.contains('landscapeLayout')) return null;
+  if(!document.body.classList.contains('landscapeLayout')) return null;
+  if(GAME_MODE === 'T42'){
+    // v14.7.0: Texas 42 sideways - the open space inside the four tags
+    var S4 = T42_SETTINGS, r4 = getRect(), W4 = r4.width, H4 = r4.height, TW4 = 54, TH4 = 30, G4 = 8;
+    if(S4.ind2x === undefined) return null;
+    var l4 = S4.ind2x * W4 + TW4 / 2 + G4, rr4 = S4.ind4x * W4 - TW4 / 2 - G4;
+    var t4 = S4.ind3y * H4 + TH4 / 2 + G4, b4 = S4.ind1y * H4 - TH4 / 2 - G4;
+    if(rr4 - l4 < 120 || b4 - t4 < 100) return null;
+    return { left: l4, top: t4, width: rr4 - l4, height: b4 - t4 };
+  }
+  if(GAME_MODE !== 'TN51') return null;
   var S = TN51_SETTINGS, r = getRect(), W = r.width, H = r.height, TW = 54, TH = 30, G = 8;
   if(S.ind2x === undefined) return null;
   var left = Math.max(S.ind2x, S.ind3x) * W + TW / 2 + G;
@@ -2604,8 +2614,45 @@ let T42_SETTINGS = {
 // Fills T42_SETTINGS; applyT42Settings() writes the LAYOUT_T42 sections as before.
 // ============================================================
 var T42_AUTO_LAYOUT = true;
+// v14.7.0: Texas 42 layout rebuilt on the TN51 approach (owner: "use what we've done for TN51").
+// Your hand at the bottom, P3 (partner) along the top, P2/P4 in columns down the left/right edges.
+// Each player's tag sits just inside their own row, played tiles are packed around LEAD, and
+// every size is the largest at which nothing touches anything else (checked with boxes, like
+// _tn51TagsAndPlays). Upright uses TN51's stacked top (menu, trick history, score bar).
+function _t42Cluster(cx, colInL, colInR, rowBottom, handTopY, TAGW, TAGH, sp){
+  var G = 8, hw = 56 * sp, hh = 28 * sp;
+  var LEADW = Math.max(44, 71 * sp + 4), LEADH = LEADW * 1.4;
+  var t3 = [cx, rowBottom + G + TAGH / 2], t1 = [cx, handTopY - G - TAGH / 2];
+  var ly = (t1[1] + t3[1]) / 2;
+  var vy = LEADH / 2 + G + hh, sx = LEADW / 2 + G + hw;
+  var o = { 1: [cx, ly + vy], 3: [cx, ly - vy], 2: [cx - sx, ly], 4: [cx + sx, ly] };
+  function box(x, y, w, h){ return { x: x, y: y, w: w + G, h: h + G }; }
+  function hit(a, b){ return Math.abs(a.x - b.x) * 2 < a.w + b.w - 1 && Math.abs(a.y - b.y) * 2 < a.h + b.h - 1; }
+  var fixed = [box(cx, ly, LEADW, LEADH), box(t1[0], t1[1], TAGW, TAGH), box(t3[0], t3[1], TAGW, TAGH)];
+  for(var q = 1; q <= 4; q++) fixed.push(box(o[q][0], o[q][1], 2 * hw, 2 * hh));
+  for(var i = 0; i < fixed.length; i++) for(var j = i + 1; j < fixed.length; j++) if(hit(fixed[i], fixed[j])) return null;
+  // played tiles must stay inside the columns
+  if(o[2][0] - hw < colInL + G || o[4][0] + hw > colInR - G) return null;
+  // P2/P4 tags hug their column: level with the play if there is room, otherwise just below or above it
+  var tx2 = colInL + G + TAGW / 2, tx4 = colInR - G - TAGW / 2, d = hh + G + TAGH / 2 + 2;
+  var tags = null, ys = [ly, ly + d, ly - d, ly + vy + d, ly - vy - d];
+  for(var k = 0; k < ys.length && !tags; k++){
+    var b2 = box(tx2, ys[k], TAGW, TAGH), b4 = box(tx4, ys[k], TAGW, TAGH);
+    if(fixed.some(function(f){ return hit(f, b2) || hit(f, b4); })) continue;
+    tags = { 2: [tx2, ys[k]], 4: [tx4, ys[k]] };
+  }
+  if(!tags) return null;
+  tags[1] = t1; tags[3] = t3;
+  return { tiles: o, tags: tags, ly: ly, LEADW: LEADW, LEADH: LEADH, hw: hw, hh: hh };
+}
+function _t42BestPlay(cx, colInL, colInR, rowBottom, handTopY, TAGW, TAGH, sMin, sMax){
+  for(var sp = sMax; sp >= sMin - 1e-9; sp -= 0.01){
+    var c = _t42Cluster(cx, colInL, colInR, rowBottom, handTopY, TAGW, TAGH, sp);
+    if(c){ c.sp = sp; return c; }
+  }
+  return null;
+}
 function computeT42AutoLayout(){
-  document.body.classList.remove('stackTop');
   _trumpSpot = null; _applyTrumpSpot();
   var rect = getRect();
   var W = rect.width, H = rect.height;
@@ -2614,78 +2661,141 @@ function computeT42AutoLayout(){
   var m = Math.max(6, Math.round(Math.min(W, H) * 0.02));
   var landscape = W > H * 1.15;
   var ins = _getSafeInsets();
-  var GAP = 0.08;
-  var s1, pitch1, handCY, handTop, handCX, tabL, tabR, tabT, tabB;
+  var GAP = 0.08, OPP = 1.08, G = 8;
+  var TAGW = landscape ? 54 : 44, TAGH = landscape ? 30 : 22;
+  var TRW = 34, TRH = 34 + 13;                 // trump marker + its TRUMP label
+  function rowLen(s){ return 6 * 56 * s * OPP + 56 * s; }
+  var s1, handTop, handCX, tabL, tabR, tabT, tabB, best = null, handCXHand = null;
+
   if(landscape){
-    // v14.3.0: right panel for scores + trick history; table uses the full height
+    document.body.classList.remove('stackTop');
     var panel = _landscapePanel(W, H, m, 4, S, 7);
-    tabL = ins.l + m; tabR = panel.panelX - m;
-    s1 = Math.min((tabR - tabL) * 0.8 / (56 * (n + (n - 1) * GAP)), 0.21 * H / 112, 1.4);
-    pitch1 = 56 * s1 * (1 + GAP);
-    handCY = H - Math.max(ins.b, m) - 4 - 56 * s1; handTop = handCY - 56 * s1;
+    var bonesW = 22;                           // the BONES tab sits just left of the panel
+    tabL = ins.l + m; tabR = panel.panelX - m - bonesW;
+    tabT = Math.max(ins.t, 4); tabB = H - 2;
     handCX = (tabL + tabR) / 2;
-    tabT = _layoutTopY(rect, ['statusBar']) + m; tabB = handTop - m;
+    var availW = tabR - tabL;
+    var sBase = 0.19 * H / 112;
+    // the status line sits bottom-left beside your hand: leave it at least 110px
+    var stEl0 = document.getElementById('statusBar');
+    var stLeft0 = stEl0 ? Math.max(0, stEl0.getBoundingClientRect().left - rect.left) : ins.l + 60;
+    var statusRight = stLeft0 + 110 + 12;
+    // bigger screens (tablets) get bigger opponents, in proportion
+    var capL = Math.min(1.1, 0.6 * Math.max(1, H / 430));
+    // Biggest opponents first; for each, the biggest hand at which the middle still fits with
+    // played tiles at least 1.15x the opponents' (TN51's rule)
+    for(var so = capL; so >= 0.3 && !best; so -= 0.02){
+      var D = 112 * so, len = rowLen(so);
+      if(len > tabB - tabT - 2 * G) continue;
+      var colInL = tabL + D, colInR = tabR - D;
+      var rowBottom = tabT + D;
+      var shMax = Math.min(1.6 * Math.max(1, H / 430), (availW - 4 * G) / (56 * (n + (n - 1) * GAP)), 0.42 * H / 112);
+      var colBottom = (tabT + tabB) / 2 + len / 2;
+      for(var sh = shMax; sh >= Math.min(sBase, shMax) - 1e-9; sh -= 0.02){
+        var hTop = H - 2 - 112 * sh;
+        // your hand stays clear of the status line (bottom-left) and of P2/P4's columns
+        // (unless it is entirely below them); centred if possible, otherwise nudged right
+        var below = hTop > colBottom + G;
+        var Lb = Math.max(statusRight, below ? tabL : colInL + G), Rb = below ? tabR : colInR - G;
+        var hW = (n - 1) * 56 * sh * (1 + GAP) + 56 * sh;
+        if(hW > Rb - Lb) continue;
+        var hcx = Math.min(Math.max(handCX, Lb + hW / 2), Rb - hW / 2);
+        var c = _t42BestPlay(handCX, colInL, colInR, rowBottom, hTop, TAGW, TAGH, 1.15 * so, 1.4 * so);
+        if(c){ best = { so: so, sh: sh, c: c, handTop: hTop, colInL: colInL, colInR: colInR, rowBottom: rowBottom, hcx: hcx }; break; }
+      }
+    }
+    if(!best){                                 // tiny screens: whatever fits
+      var so2 = 0.3, D2 = 112 * so2;
+      var hTop2 = H - 2 - 112 * sBase;
+      var hW2 = (n - 1) * 56 * sBase * (1 + GAP) + 56 * sBase;
+      // slide your hand right as far as the table allows, so the status line keeps some room
+      var hcx2 = Math.max(handCX, Math.min(statusRight + hW2 / 2, tabR - hW2 / 2));
+      best = { so: so2, sh: sBase, handTop: hTop2, colInL: tabL + D2, colInR: tabR - D2, rowBottom: tabT + D2, hcx: hcx2,
+               c: _t42BestPlay(handCX, tabL + D2, tabR - D2, tabT + D2, hTop2, TAGW, TAGH, 0.3, 0.6) ||
+                  _t42Cluster(handCX, tabL + D2, tabR - D2, tabT + D2, hTop2, TAGW, TAGH, 0.3) };
+    }
+    s1 = best.sh; handTop = best.handTop;
+    var colCYl = (tabT + tabB) / 2;
+    best.colCY = colCYl;
+    // Status line (bottom-left): keep it clear of your hand
+    var handWl = (n - 1) * 56 * s1 * (1 + GAP) + 56 * s1;
+    if(best.hcx) handCXHand = best.hcx;
+    var stEl = document.getElementById('statusBar');
+    var stLeft = stEl ? Math.max(0, stEl.getBoundingClientRect().left - rect.left) : ins.l + 60;
+    document.body.style.setProperty('--statusMaxW', Math.round(Math.max(80, (handCXHand || handCX) - handWl / 2 - stLeft - 8)) + 'px');
   } else {
+    // ----- Upright: TN51's stacked top (menu, trick history, score bar), then the table -----
     S.thTranspose = false; _trickHistoryFlat();
     document.body.style.removeProperty('--sidePanelW');
-    var topY = _layoutTopY(rect) + m;
+    document.body.classList.add('stackTop');
+    var topY2 = ins.t + 4 + 34 + 4;
     s1 = Math.min((W - 2 * m) / (56 * (n + (n - 1) * GAP)), 0.22 * H / 112, 1.6);
-    pitch1 = 56 * s1 * (1 + GAP);
-    handCY = H - (m + 4) - 56 * s1; handTop = handCY - 56 * s1; handCX = W / 2;
-    // Trick history: 8 columns (tricks) x 4 rows
+    var handCY = H - (m + 4) - 56 * s1; handTop = handCY - 56 * s1; handCX = W / 2;
+    // Trick history box: 8 columns (tricks) x 4 rows (one tile per player)
     var thPad = Math.max(6, m);
     var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112 * 1.06), (H * 0.17 - 2 * thPad) / (4 * 56 * 1.3), 0.6);
     var thTileW = 112 * sth, thTileH = 56 * sth;
     var thInnerW = W - 2 * m - 2 * thPad;
     var thBoxW = thInnerW + 2 * thPad, thBoxH = 4 * thTileH * 1.3 + 2 * thPad;
-    var thLeft = (W - thBoxW) / 2, thTop = topY;
+    var thLeft = (W - thBoxW) / 2, thTop = topY2;
     S.thScale = sth;
     S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
     S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
     _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
-    tabL = m; tabR = W - m; tabT = thTop + thBoxH + m; tabB = handTop - m;
+    var scoreTop = thTop + thBoxH + 4;
+    document.body.style.setProperty('--scoreTop', scoreTop + 'px');
+    var tbEl = document.getElementById('topbar');
+    var tbH = tbEl ? tbEl.offsetHeight : 44;
+    tabL = m; tabR = W - m; tabT = scoreTop + tbH + m; tabB = handTop - m;
+    var availWp = tabR - tabL;
+    // Trump marker in the table's top-left corner (as TN51 upright), so P3's row and P2's
+    // column must leave that corner free
+    var capP = Math.min(1.2, 0.75 * Math.max(1, W / 430));
+    for(var sp0 = capP; sp0 >= 0.3 && !best; sp0 -= 0.02){
+      var Dp = 112 * sp0, lenp = rowLen(sp0);
+      if(lenp > availWp - 2 * (TRW + G + 4)) continue;
+      var rowBottomP = tabT + Dp;
+      var colTop = Math.max(rowBottomP + G, tabT + 4 + TRH + G);
+      if(colTop + lenp > tabB) continue;
+      var cP = _t42BestPlay(handCX, tabL + Dp, tabR - Dp, rowBottomP, handTop, TAGW, TAGH, 1.0 * sp0, 1.3 * sp0);
+      if(cP) best = { so: sp0, sh: s1, c: cP, handTop: handTop, colInL: tabL + Dp, colInR: tabR - Dp, rowBottom: rowBottomP, colCY: colTop + lenp / 2 };
+    }
+    if(!best){
+      var Dq = 112 * 0.3;
+      best = { so: 0.3, sh: s1, handTop: handTop, colInL: tabL + Dq, colInR: tabR - Dq, rowBottom: tabT + Dq, colCY: (tabT + Dq + tabB) / 2,
+               c: _t42Cluster(handCX, tabL + Dq, tabR - Dq, tabT + Dq, handTop, TAGW, TAGH, 0.3) };
+    }
+    _trumpSpot = { left: tabL + 4, top: tabT + 4 };
   }
 
-  var availW = tabR - tabL, availH = tabB - tabT;
-  // Opponent tiles: a row of 7 along each side, 1.08 pitch; side columns must clear the top row
-  var sOpp = Math.min(availW / (7.5 * 56 + 2 * 112 * 1.2), availH / (7.5 * 56 + 2 * 112 * 1.2), 0.8);
-  var pitchO = 56 * sOpp * 1.08, depth = 112 * sOpp;
-  var cx = (tabL + tabR) / 2, cy = (tabT + tabB) / 2;
-  // Square table on a phone held upright; wider than tall when the phone is sideways
-  var halfX = landscape ? availW / 2 : Math.min(availW / 2, availH * 0.85), halfY = Math.min(availH / 2, halfX);
-  var colX2 = cx - halfX + depth / 2, colX4 = cx + halfX - depth / 2;
-  var rowY3 = cy - halfY + depth / 2;
-  var colCY = cy + depth * 0.3;             // side columns sit a little low, clear of the top row
+  var sOpp = best.so, Dd = 112 * sOpp, pitchO = 56 * sOpp * OPP, cx = handCX;
   S.p2Scale = S.p3Scale = S.p4Scale = sOpp;
-  S.p2x = colX2 / W; S.p2y = colCY / H; S.p2Spacing = pitchO / H;
-  S.p4x = colX4 / W; S.p4y = colCY / H; S.p4Spacing = pitchO / H;
-  S.p3x = (cx - 3 * pitchO) / W; S.p3y = rowY3 / H; S.p3Spacing = pitchO / W; S.p3xOff = 0;
+  S.p2x = (tabL + Dd / 2) / W; S.p2y = best.colCY / H; S.p2Spacing = pitchO / H;
+  S.p4x = (tabR - Dd / 2) / W; S.p4y = best.colCY / H; S.p4Spacing = pitchO / H;
+  S.p3x = (cx - 3 * pitchO) / W; S.p3y = (tabT + Dd / 2) / H; S.p3Spacing = pitchO / W; S.p3xOff = 0;
+  var pitch1 = 56 * s1 * (1 + GAP);
   S.p1Scale = s1; S.p1Spacing = pitch1 / W;
-  S.p1x = (handCX + 3 * pitch1) / W; S.p1y = handCY / H;
+  S.p1x = ((handCXHand || cx) + 3 * pitch1) / W; S.p1y = (best.handTop + 56 * s1) / H;
 
-  // Centre: played tiles, lead square, player markers
-  var pcx = cx, pcy = colCY;
-  var dp = 112 * sOpp * 0.75;
-  S.trickScale = sOpp; S.leadScale = sOpp * 0.86; S.leadX = pcx / W; S.leadY = pcy / H;
-  S.p1TrickX = pcx / W;             S.p1TrickY = (pcy + dp) / H;
-  S.p3TrickX = pcx / W;             S.p3TrickY = (pcy - dp) / H;
-  S.p2TrickX = (pcx - dp * 1.55) / W; S.p2TrickY = pcy / H;
-  S.p4TrickX = (pcx + dp * 1.55) / W; S.p4TrickY = pcy / H;
-  var di = dp * 1.55 + 56 * sOpp + 20;
-  S.ind1x = pcx / W; S.ind1y = (pcy + dp + 56 * sOpp * 0.5 + 18) / H;
-  S.ind3x = pcx / W; S.ind3y = (pcy - dp - 56 * sOpp * 0.5 - 18) / H;
-  S.ind2x = (pcx - di) / W; S.ind2y = pcy / H;
-  S.ind4x = (pcx + di) / W; S.ind4y = pcy / H;
-
-  PLACEHOLDER_CONFIG_T42.dominoWidth = Math.round(112 * sOpp);
-  PLACEHOLDER_CONFIG_T42.dominoHeight = Math.round(56 * sOpp);
-  PLACEHOLDER_CONFIG_T42.leadSize = Math.round(28 * sOpp / 0.5);
-  return window._t42LastGeom = { W: W, H: H, landscape: landscape, sOpp: sOpp, s1: s1 };
+  var C = best.c, sp = C ? (C.sp || sOpp) : sOpp;
+  if(C){
+    for(var q = 1; q <= 4; q++){
+      S['p' + q + 'TrickX'] = C.tiles[q][0] / W; S['p' + q + 'TrickY'] = C.tiles[q][1] / H;
+      S['ind' + q + 'x'] = C.tags[q][0] / W;     S['ind' + q + 'y'] = C.tags[q][1] / H;
+    }
+    S.leadX = cx / W; S.leadY = C.ly / H;
+  }
+  S.trickScale = sp; S.leadScale = sp;
+  PLACEHOLDER_CONFIG_T42.dominoWidth = Math.round(112 * sp);
+  PLACEHOLDER_CONFIG_T42.dominoHeight = Math.round(56 * sp);
+  PLACEHOLDER_CONFIG_T42.leadSize = Math.round(28 * sp / 0.393);
+  return window._t42LastGeom = { W: W, H: H, landscape: landscape, sOpp: sOpp, s1: s1, sPlay: sp };
 }
 
 function applyT42Settings(){
   if(GAME_MODE !== 'T42') return;
   if(T42_AUTO_LAYOUT){ try { computeT42AutoLayout(); } catch(e){ console.warn('T42 auto layout failed', e); } }
+  _applyTrumpSpot();
   const s = T42_SETTINGS;
   const L = LAYOUT_T42.sections;
   // P1 Hand (bottom, horizontal)
