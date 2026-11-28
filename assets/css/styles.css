@@ -2210,3 +2210,6 @@ body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
   .dpGrid{ grid-template-columns:repeat(3,1fr); }
   .dpFoot{ padding:8px 14px 10px; } .dpFoot button{ padding:10px; }
 }
+
+/* v14.7.3: BONES drawer (upright) - solid backing like the history box, above the score bar */
+#boneyard2Container{ background:#174d2b; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,0.45); z-index:150; }

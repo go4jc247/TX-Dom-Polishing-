@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.7.2'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.3'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2222,6 +2222,12 @@ function _trickHistoryFlat(){
 
 function _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H){
   var bg = document.getElementById('trickHistoryBg');
+  var by = document.getElementById('boneyard2Container');
+  if(by){
+    by.style.setProperty('--th-left', (thLeft / W * 100) + '%');
+    by.style.setProperty('--th-top', (thTop / H * 100) + '%');
+    by.style.setProperty('--th-width', (thBoxW / W * 100) + '%');
+  }
   if(bg){
     bg.style.setProperty('--th-left', (thLeft / W * 100) + '%');
     bg.style.setProperty('--th-top', (thTop / H * 100) + '%');
@@ -2372,14 +2378,15 @@ function computeTn51AutoLayout(){
   var handCY = H - (m + 4) - 56 * s1, handTop = handCY - 56 * s1, handCX = W / 2;
   // Trick history box: 8 columns (tricks) x 6 rows (one tile per player)
   var thPad = Math.max(6, m);
-  var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112 * 1.06), (H * 0.2 - 2 * thPad) / (6 * 56 * 1.3), 0.6);
+  // v14.7.3: the played dominoes fill the box and touch (owner: no gaps)
+  var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112), (H * 0.2 - 2 * thPad) / (6 * 56), 0.6);
   var thTileW = 112 * sth, thTileH = 56 * sth;
-  var thInnerW = W - 2 * m - 2 * thPad;
-  var thBoxW = thInnerW + 2 * thPad, thBoxH = 6 * thTileH * 1.3 + 2 * thPad;
+  var thInnerW = 8 * thTileW;
+  var thBoxW = thInnerW + 2 * thPad, thBoxH = 6 * thTileH + 2 * thPad;
   var thLeft = (W - thBoxW) / 2, thTop = topY2;
   S.thScale = sth;
-  S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
-  S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
+  S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = thTileW / W;
+  S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = thTileH / H;
   _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
   var scoreTop = thTop + thBoxH + 4;
   document.body.style.setProperty('--scoreTop', scoreTop + 'px');
@@ -2735,14 +2742,15 @@ function computeT42AutoLayout(){
     var handCY = H - (m + 4) - 56 * s1; handTop = handCY - 56 * s1; handCX = W / 2;
     // Trick history box: 8 columns (tricks) x 4 rows (one tile per player)
     var thPad = Math.max(6, m);
-    var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112 * 1.06), (H * 0.17 - 2 * thPad) / (4 * 56 * 1.3), 0.6);
+    // v14.7.3: the played dominoes fill the box and touch (owner: no gaps)
+    var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112), (H * 0.17 - 2 * thPad) / (4 * 56), 0.6);
     var thTileW = 112 * sth, thTileH = 56 * sth;
-    var thInnerW = W - 2 * m - 2 * thPad;
-    var thBoxW = thInnerW + 2 * thPad, thBoxH = 4 * thTileH * 1.3 + 2 * thPad;
+    var thInnerW = 8 * thTileW;
+    var thBoxW = thInnerW + 2 * thPad, thBoxH = 4 * thTileH + 2 * thPad;
     var thLeft = (W - thBoxW) / 2, thTop = topY2;
     S.thScale = sth;
-    S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = ((thInnerW - thTileW) / 7) / W;
-    S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH * 1.3) / H;
+    S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = thTileW / W;
+    S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = thTileH / H;
     _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
     var scoreTop = thTop + thBoxH + 4;
     document.body.style.setProperty('--scoreTop', scoreTop + 'px');
@@ -10381,34 +10389,13 @@ function renderBoneyard2(){
   const containerW = container.offsetWidth;
   if(containerW <= 0) return;
 
-  // Trick history normalized positions — same for both modes
-  const thColXN = [0.106, 0.2171, 0.3282, 0.4393, 0.5504, 0.6616, 0.7727, 0.8838];
-  const thRowYN = GAME_MODE === 'T42'
-    ? [0.2281, 0.2592, 0.2904, 0.3215]
-    : [0.197, 0.2281, 0.2592, 0.2904, 0.3215, 0.3526];
-
-  const colSpacing = (thColXN[thColXN.length-1] - thColXN[0]) / (thColXN.length-1) * tableW;
-  const rowSpacing = (thRowYN[thRowYN.length-1] - thRowYN[0]) / Math.max(1, thRowYN.length-1) * tableH;
-
-  // Trick history tile size: scale 0.393 of 56x112, rotated 270° (landscape)
-  // Rendered size: ~44px wide x ~22px tall
-  const thScale = 0.393;
-  const cellW = Math.round(BASE_H * thScale);  // 112 * 0.393 ≈ 44 (landscape width)
-  const cellH = Math.round(BASE_W * thScale);   // 56 * 0.393 ≈ 22 (landscape height)
-
-  // Container is positioned inside tableMain
-  // Canvas drawing coords are relative to the container's initial position (5%/16%)
-  // When sliders move the container, the canvas moves with it (child element)
-  const containerLeft = tableW * 0.05;  // initial container position
-  const containerTop = 0;
-
-  // Convert trick history center positions to container-relative positions
-  const col0X = thColXN[0] * tableW - containerLeft;
-
-  // Container top = 16% of tableMain (initial position)
-  const containerTopOffset = tableH * 0.16;
-  const row0Y = thRowYN[0] * tableH - containerTopOffset;
-
+  // v14.7.3: the grid fills the drawer's width (same box as the trick history) with touching
+  // dominoes; the drawer grows downward as far as it needs, on a solid backing
+  const _byPad = 6;
+  const _byCols = session.game.max_pip + 1;
+  const cellW = (containerW - 2 * _byPad) / _byCols, cellH = cellW / 2;
+  const colSpacing = cellW, rowSpacing = cellH;
+  const col0X = _byPad + cellW / 2, row0Y = _byPad + cellH / 2;
   // Now we know: boneyard rows 0-5 align with trick history rows 0-5
   // Rows 6-7 extend below with same rowSpacing
   const _by2MaxPip = session.game.max_pip;
@@ -10419,8 +10406,7 @@ function renderBoneyard2(){
   const numRows = _by2MaxPip + 1;
 
   // Canvas height needs to accommodate all 8 rows
-  const lastRowY = row0Y + (numRows - 1) * rowSpacing + cellH / 2;
-  const canvasH = Math.max(lastRowY + gap + cellH, (numRows - 1) * rowSpacing + cellH + row0Y + 4);
+  const canvasH = numRows * cellH + 2 * _byPad;
 
   canvas.width = Math.round(containerW * dpr);
   canvas.height = Math.round(canvasH * dpr);
@@ -10487,8 +10473,8 @@ function renderBoneyard2(){
   // Apply gap as additional spacing between tiles (added to base grid spacing)
   // gap=0 means tiles use exact trick history positions, gap>0 adds extra padding
   // We reduce cellW/cellH to create visual spacing while keeping positions the same
-  const effectiveCellW = Math.max(10, cellW - gap);
-  const effectiveCellH = Math.max(5, cellH - gap);
+  const effectiveCellW = Math.max(10, cellW - 1);   // 1px so neighbouring edges still read
+  const effectiveCellH = Math.max(5, cellH - 1);
 
   // Draw each tile — landscape orientation (rotated 90° CCW from portrait)
   for(let rowIdx = 0; rowIdx < rows.length; rowIdx++){

@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.7.2 — Texas 42 upright uses the original cross layout
+// Version: v14.7.3 — Trick history dominoes touch; BONES drawer fixed
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.7.2';
+const CACHE_NAME = 'tx-dom-v14.7.3';
 const urlsToCache = [
   './index.html',
   './sw.js',
