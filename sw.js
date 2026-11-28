@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.8.1 — Blue look for all pop-ups
+// Version: v14.8.2 — Pop-ups back to the bright original blue
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.8.1';
+const CACHE_NAME = 'tx-dom-v14.8.2';
 const urlsToCache = [
   './index.html',
   './sw.js',

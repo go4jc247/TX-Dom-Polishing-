@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.8.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.8.2 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -372,6 +372,9 @@ function _lazyLoad(src, cb) {
      #layDownPanel, round-end box, game-end box (win/lose kept as a green/red top band: .popWin/.popLose).
      Colours only - no size/position changes. Game Settings' coloured option chips and the domino picker page
      were left as they were.
+   v14.8.2: owner: the navy was too dull ("bring back the brightness"). --popBg is his ORIGINAL bright blue
+     #3b82f6->#1d4ed8 again, buttons back to the original bright gloss (green primary, purple Nello, red No);
+     the new card shape/shadow/sizing stays. Slider fill light blue #bfdbfe, thumb ring #1d4ed8.
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.
