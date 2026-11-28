@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.7.3'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.4'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2688,7 +2688,7 @@ function computeT42AutoLayout(){
     // the status line sits bottom-left beside your hand: leave it at least 110px
     var stEl0 = document.getElementById('statusBar');
     var stLeft0 = stEl0 ? Math.max(0, stEl0.getBoundingClientRect().left - rect.left) : ins.l + 60;
-    var statusRight = stLeft0 + 110 + 12;
+    var statusRight = (stEl0 && getComputedStyle(stEl0).display !== 'none') ? stLeft0 + 110 + 12 : 0;
     // bigger screens (tablets) get bigger opponents, in proportion
     var capL = Math.min(1.1, 0.6 * Math.max(1, H / 430));
     // Biggest opponents first; for each, the biggest hand at which the middle still fits with

@@ -2213,3 +2213,7 @@ body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
 
 /* v14.7.3: BONES drawer (upright) - solid backing like the history box, above the score bar */
 #boneyard2Container{ background:#174d2b; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,0.45); z-index:150; }
+
+/* v14.7.4: owner - the status ticker is an annoyance; the centre pop-ups already say what matters.
+   Hidden everywhere (setStatus still runs, so the turn-tag glow keeps working). */
+#statusBar{ display:none !important; }

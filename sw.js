@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.7.3 — Trick history dominoes touch; BONES drawer fixed
+// Version: v14.7.4 — Status ticker removed from the screen
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.7.3';
+const CACHE_NAME = 'tx-dom-v14.7.4';
 const urlsToCache = [
   './index.html',
   './sw.js',
