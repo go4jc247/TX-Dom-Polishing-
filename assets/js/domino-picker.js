@@ -15,9 +15,11 @@
     ivory: { name:'Ivory', face:'#f7dca1', hi:'#fbe9c2', back:'#e8decd', edge:'#d7c9a8', line:'dark', tex:'ivory' },
     white: { name:'White', face:'#f9f8f9', hi:'#ffffff', back:'#ecebe6', edge:'#d0d0d0', line:'dark', tex:'white' },
     cream: { name:'Cream', face:'#fde6a7', hi:'#fff0c8', back:'#e2d3b0', edge:'#d8c48f', line:'dark', tex:'cream' },
-    wood:  { name:'Wood',  face:'#da9a5c', hi:'#e6ad74', back:'#a8743f', edge:'#8a5a2e', line:'dark', grain:true, tex:'wood' },
+    wood:  { name:'Wood',  face:'#da9a5c', hi:'#e6ad74', back:'#a8743f', edge:'#8a5a2e', line:'dark', grain:true, tex:'wood', lengthwise:true },
     navy:  { name:'Navy',  face:'#031a46', hi:'#0c2a63', back:'#16223b', edge:'#0f1729', line:'light', tex:'navy' },
-    black: { name:'Black', face:'#0b0b0c', hi:'#232327', back:'#141518', edge:'#0c0c0e', line:'light', tex:'black' }
+    black: { name:'Black', face:'#0b0b0c', hi:'#232327', back:'#141518', edge:'#0c0c0e', line:'light', tex:'black' },
+    marble:{ name:'Marble', face:'#0c0c0c', hi:'#26262a', back:'#141518', edge:'#0c0c0e', line:'light', tex:'marble' },
+    flowers:{ name:'Flowers', face:'#ebd1a7', hi:'#f5e2c2', back:'#e2d3b0', edge:'#d3bb92', line:'dark', tex:'flowers' }
   };
 
   var PRESETS = [
@@ -110,6 +112,10 @@
     DOMINO_STYLE.BEVEL_OPACITY = light ? 0.12 : 0.40;
     DOMINO_STYLE.FACE_GRAIN = !!f.grain;
     DOMINO_STYLE.FACE_TEXTURE = getTex(f.tex);
+    // v14.6.4: which way the pattern sits on each tile. Wood never turns sideways (grain stays
+    // along the tile), so for wood 'random' only flips it 180 degrees.
+    var pat = look.pattern || 'random';
+    DOMINO_STYLE.TEX_DIR = (f.lengthwise && pat === 'random') ? 'flip' : pat;
     DOMINO_STYLE.PIP_GLOW = r.glow;
     for(var i=0;i<8;i++) DOMINO_STYLE.PIP_COLORS[i] = r.dots[i];
   }
@@ -137,13 +143,13 @@
     var keep = JSON.stringify({ F:DOMINO_STYLE.FACE, B:DOMINO_STYLE.BACK, E:DOMINO_STYLE.EDGE, P:DOMINO_STYLE.PIP_COLORS,
       fl:DOMINO_STYLE.FANCY_LINE_COLOR, cl:DOMINO_STYLE.CENTER_LINE_COLOR, bo:DOMINO_STYLE.BEVEL_OPACITY,
       g:DOMINO_STYLE.FACE_GRAIN, gl:DOMINO_STYLE.PIP_GLOW });
-    var keepTex = DOMINO_STYLE.FACE_TEXTURE;
+    var keepTex = DOMINO_STYLE.FACE_TEXTURE, keepDir = DOMINO_STYLE.TEX_DIR;
     applyToStyle(look); fn();
     var k = JSON.parse(keep);
     Object.assign(DOMINO_STYLE.FACE,k.F); Object.assign(DOMINO_STYLE.BACK,k.B); Object.assign(DOMINO_STYLE.EDGE,k.E);
     Object.assign(DOMINO_STYLE.PIP_COLORS,k.P);
     DOMINO_STYLE.FANCY_LINE_COLOR=k.fl; DOMINO_STYLE.CENTER_LINE_COLOR=k.cl; DOMINO_STYLE.BEVEL_OPACITY=k.bo;
-    DOMINO_STYLE.FACE_GRAIN=k.g; DOMINO_STYLE.PIP_GLOW=k.gl; DOMINO_STYLE.FACE_TEXTURE=keepTex;
+    DOMINO_STYLE.FACE_GRAIN=k.g; DOMINO_STYLE.PIP_GLOW=k.gl; DOMINO_STYLE.FACE_TEXTURE=keepTex; DOMINO_STYLE.TEX_DIR=keepDir;
   }
 
   // ---------- state ----------
@@ -171,6 +177,9 @@
         '<div class="dpStage"><div class="dpFan"></div><div class="dpStageName"></div></div>' +
         '<div class="dpBody">' +
           '<div class="dpGrid"></div>' +
+          '<div class="dpLabel dpPatLabel">Pattern direction</div>' +
+          '<div class="dpSeg dpPat"><button data-pat="same">Same way</button><button data-pat="flip">Some flipped</button><button data-pat="random">Random</button></div>' +
+          '<div class="dpSegHint dpPatHint"></div>' +
           '<div class="dpCustom">' +
             '<div class="dpLabel">Tile colour</div><div class="dpFaces"></div>' +
             '<div class="dpLabel">Dots</div>' +
@@ -212,7 +221,11 @@
       faces.appendChild(b);
     });
 
-    root.querySelectorAll('.dpSeg button').forEach(function(b){
+    root.querySelectorAll('.dpPat button').forEach(function(b){
+      b.onclick = function(){ draft.pattern = b.dataset.pat; render(true); };
+    });
+
+    root.querySelectorAll('.dpSeg:not(.dpPat) button').forEach(function(b){
       b.onclick = function(){
         if(draft.custom.mode !== b.dataset.mode && b.dataset.mode==='one'){
           draft.custom.one = draft.custom.each[selNum] || draft.custom.one;
@@ -285,7 +298,7 @@
     root.querySelectorAll('.dpCard').forEach(function(card){
       var id = card.dataset.id;
       card.classList.toggle('on', id===draft.preset);
-      var look = id==='custom' ? { preset:'custom', custom:draft.custom } : { preset:id };
+      var look = id==='custom' ? { preset:'custom', custom:draft.custom, pattern:draft.pattern } : { preset:id, pattern:draft.pattern };
       var c = card.querySelectorAll('canvas');
       withLook(look, function(){ drawTile(c[0],[5,3],30,60); drawTile(c[1],[6,2],30,60); });
     });
@@ -294,14 +307,22 @@
     var cu = draft.custom, isCustom = draft.preset==='custom';
     root.querySelector('.dpCustom').classList.toggle('open', isCustom);
     root.querySelectorAll('.dpFace').forEach(function(b){ b.classList.toggle('on', b.dataset.face===cu.face); });
-    root.querySelectorAll('.dpSeg button').forEach(function(b){ b.classList.toggle('on', b.dataset.mode===cu.mode); });
+    root.querySelectorAll('.dpSeg:not(.dpPat) button').forEach(function(b){ b.classList.toggle('on', b.dataset.mode===cu.mode); });
+    var pat = draft.pattern || 'random';
+    root.querySelectorAll('.dpPat button').forEach(function(b){ b.classList.toggle('on', b.dataset.pat===pat); });
+    var faceNow = draft.preset==='custom' ? FACES[cu.face] : FACES[(PRESETS.filter(function(p){ return p.id===draft.preset; })[0]||PRESETS[0]).face];
+    root.querySelector('.dpPatHint').textContent =
+      pat==='same' ? 'The pattern sits the same way on every domino.' :
+      pat==='flip' ? 'Some dominoes have the pattern turned upside down.' :
+      (faceNow && faceNow.lengthwise ? 'Each domino turns the pattern its own way. Wood grain only flips, so it stays along the tile.'
+                                     : 'Each domino turns the pattern its own way.');
     var nums = root.querySelector('.dpNums');
     nums.style.display = cu.mode==='one' ? 'none' : '';
-    root.querySelector('.dpSegHint').textContent =
+    root.querySelector('.dpCustom .dpSegHint').textContent =
       cu.mode==='one' ? 'Every dot is the same colour.' :
       cu.mode==='each' ? 'Pick a colour for each number. Colours can repeat.' :
       'Every number gets its own colour. No two are alike.';
-    withLook({ preset:'custom', custom:cu }, function(){
+    withLook({ preset:'custom', custom:cu, pattern:draft.pattern }, function(){
       nums.querySelectorAll('.dpNum').forEach(function(b){
         var n = +b.dataset.n;
         b.classList.toggle('on', n===selNum);

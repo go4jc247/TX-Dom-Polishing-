@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.6.3 — Real material textures on the domino faces
+// Version: v14.6.4 — Pattern direction; Marble and Flowers tiles
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.6.3';
+const CACHE_NAME = 'tx-dom-v14.6.4';
 const urlsToCache = [
   './index.html',
   './sw.js',
@@ -40,6 +40,8 @@ const urlsToCache = [
   './assets/images/textures/wood.jpg',
   './assets/images/textures/navy.jpg',
   './assets/images/textures/black.jpg',
+  './assets/images/textures/marble.jpg',
+  './assets/images/textures/flowers.jpg',
   // SFX
   './assets/audio/sfx-click.mp3',
   './assets/audio/sfx-play1.mp3',

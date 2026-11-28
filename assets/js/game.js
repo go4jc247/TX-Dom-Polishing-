@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.6.3'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.6.4'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -5723,10 +5723,21 @@ function drawFace(ctx, tile, w, h, highlighted = false, valid = true, rotRad){
     ctx.save();
     roundRectPath(ctx, 0, 0, w, h, rCss); ctx.clip();
     const tw = tex.naturalWidth, th = tex.naturalHeight;
-    const sh = th * 0.75, sw = Math.min(tw, sh * w / h);
-    const seed = ((Number(tile && tile[0]) || 0) * 8 + (Number(tile && tile[1]) || 0)) * 2654435761 >>> 0;
+    const seed = ((Number(tile && tile[0]) || 0) * 8 + (Number(tile && tile[1]) || 0) + 1) * 2654435761 >>> 0;
+    // v14.6.4: pattern direction - 'same', 'flip' (some tiles turned 180) or 'random' (any angle)
+    const dir = DOMINO_STYLE.TEX_DIR || 'same';
+    let ang = 0;
+    if (dir === 'flip') ang = (seed >>> 20) & 1 ? Math.PI : 0;
+    else if (dir === 'random') ang = ((seed >>> 12) % 360) * Math.PI / 180;
+    // texture pixels per screen pixel stays the same at any angle (0.75 of the texture = tile height)
+    const k = (th * 0.75) / h;
+    const D = ang ? Math.sqrt(w * w + h * h) : 0;         // size that covers the tile at any angle
+    const dw = ang ? D : w, dh = ang ? D : h;
+    const sw = Math.min(tw, dw * k), sh = Math.min(th, dh * k);
     const sx = (seed % 1000) / 1000 * (tw - sw), sy = ((seed >>> 10) % 1000) / 1000 * (th - sh);
-    ctx.drawImage(tex, sx, sy, sw, sh, 0, 0, w, h);
+    ctx.translate(w / 2, h / 2); ctx.rotate(ang);
+    ctx.drawImage(tex, sx, sy, sw, sh, -dw / 2, -dh / 2, dw, dh);
+    ctx.rotate(-ang); ctx.translate(-w / 2, -h / 2);
     // soft depth: a touch lighter at the top, darker at the bottom
     const sg = ctx.createLinearGradient(0, 0, 0, h);
     sg.addColorStop(0, "rgba(255,255,255,0.10)"); sg.addColorStop(1, "rgba(0,0,0,0.08)");
