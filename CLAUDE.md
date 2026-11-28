@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.8.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.8.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -365,6 +365,13 @@ function _lazyLoad(src, cb) {
      kept in sync by an input listener + 300ms poll), big 30pt thumb. Other pop-ups (settings, logs,
      about...) still use the old system.
 
+   v14.8.1: owner liked the new bid window size but wanted "a nice blue" and ALL pop-ups alike. One shared skin
+     in styles.css (vars --popBg/--popEdge/--popPrimary/--popAccent/--popFill): blue gradient #2a5797->#1c3f74,
+     soft edge, 16px corners, deep shadow, muted buttons (primary blue, grey translucent, Nello purple). Applied
+     with !important to .gameCard, every other .modalPanel, About / Pass & Play / Multiplayer panels,
+     #layDownPanel, round-end box, game-end box (win/lose kept as a green/red top band: .popWin/.popLose).
+     Colours only - no size/position changes. Game Settings' coloured option chips and the domino picker page
+     were left as they were.
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.

@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.8.0'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.8.1'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -10099,7 +10099,7 @@ function showGameEndSummary(){
     _btnSection = '<button id="gameEndNewGameBtn" style="padding:10px 28px;font-size:15px;font-weight:700;color:#1d4ed8;background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%);border:none;border-radius:10px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.2);transition:transform 0.15s ease;">New Game</button>';
   }
 
-  overlay.innerHTML = '<div style="background:' + _endBg + ';border-radius:16px;padding:0;text-align:center;color:#fff;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);pointer-events:auto;min-width:200px;max-width:80%;overflow:hidden;">'
+  overlay.innerHTML = '<div class="' + (_youWon ? 'popWin' : 'popLose') + '" style="background:' + _endBg + ';border-radius:16px;padding:0;text-align:center;color:#fff;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);pointer-events:auto;min-width:200px;max-width:80%;overflow:hidden;">'
     + '<div style="padding:14px 28px 10px;">'
     + '<div style="font-size:20px;font-weight:900;margin-bottom:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);">' + _endTitle + '</div>'
     + (MULTIPLAYER_MODE ? '<div style="font-size:13px;opacity:0.85;margin-bottom:8px;font-weight:600;">' + _tallyText + '</div>' : '')
