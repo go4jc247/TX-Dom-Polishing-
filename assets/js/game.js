@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.7.5'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.6'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2678,6 +2678,7 @@ function computeT42AutoLayout(){
 
   if(landscape){
     document.body.classList.remove('stackTop');
+    S.thTeamGapX = 0;
     var panel = _landscapePanel(W, H, m, 4, S, 7);
     var bonesW = 22;                           // the BONES tab sits just left of the panel
     tabL = ins.l + m; tabR = panel.panelX - m - bonesW;
@@ -2742,15 +2743,17 @@ function computeT42AutoLayout(){
     var handCY = H - (m + 4) - 56 * s1; handTop = handCY - 56 * s1; handCX = W / 2;
     // Trick history box: 8 columns (tricks) x 4 rows (one tile per player)
     var thPad = Math.max(6, m);
-    // v14.7.3: the played dominoes fill the box and touch (owner: no gaps)
-    var sth = Math.min((W - 2 * m - 2 * thPad) / (8 * 112), (H * 0.17 - 2 * thPad) / (4 * 56), 0.6);
+    // v14.7.6 (owner): 7 tricks + a quarter of a domino between Team 1 (from the left) and Team 2
+    // (from the right) = 7.25 dominoes across, with a 1px gap between dominoes and between rows
+    var sth = Math.min((W - 2 * m - 2 * thPad - 7) / (7.25 * 112), (H * 0.17 - 2 * thPad - 3) / (4 * 56), 0.6);
     var thTileW = 112 * sth, thTileH = 56 * sth;
-    var thInnerW = 8 * thTileW;
-    var thBoxW = thInnerW + 2 * thPad, thBoxH = 4 * thTileH + 2 * thPad;
+    var thInnerW = 7.25 * thTileW + 7;
+    var thBoxW = thInnerW + 2 * thPad, thBoxH = 4 * thTileH + 3 + 2 * thPad;
+    S.thTeamGapX = (0.25 * thTileW + 1) / W;
     var thLeft = (W - thBoxW) / 2, thTop = topY2;
     S.thScale = sth;
-    S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = thTileW / W;
-    S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = thTileH / H;
+    S.thBaseX = (thLeft + thPad + thTileW / 2) / W; S.thRowSpacing = (thTileW + 1) / W;
+    S.thBaseY = (thTop + thPad + thTileH / 2) / H;  S.thColSpacing = (thTileH + 1) / H;
     _setTrickBoxPortrait(thLeft, thTop, thBoxW, thBoxH, W, H);
     var scoreTop = thTop + thBoxH + 4;
     document.body.style.setProperty('--scoreTop', scoreTop + 'px');
@@ -6412,6 +6415,9 @@ function getTrickHistoryPosition(teamTrickIndex, winningTeam, playerRowIndex){
   // Team 2 from the bottom; together they can never pass the hand size, so they never collide)
   const _thS = (GAME_MODE === 'T42') ? T42_SETTINGS : TN51_SETTINGS;
   if(_thS && _thS.thTranspose && session.game.hand_size) numRows = Math.min(numRows, session.game.hand_size);
+  // v14.7.6: Texas 42 upright - one slot per trick (7), Team 2 shifted right by the team gap
+  const _t42Up = GAME_MODE === 'T42' && _thS && !_thS.thTranspose && _thS.thTeamGapX && session.game.hand_size;
+  if(_t42Up) numRows = Math.min(numRows, session.game.hand_size);
   const maxTeamTricks = numRows - 1;
 
   let row;
@@ -6427,7 +6433,8 @@ function getTrickHistoryPosition(teamTrickIndex, winningTeam, playerRowIndex){
   if(!d) return null;
   // v14.3.7: sideways, Team 2's group sits a little lower so the two teams never touch
   const _teamGap = (_thS && _thS.thTranspose && winningTeam !== 0) ? (_thS.thTeamGap || 0) : 0;
-  const px = normToPx(d.xN, d.yN + _teamGap);
+  const _teamGapX = (_t42Up && winningTeam !== 0) ? _thS.thTeamGapX : 0;
+  const px = normToPx(d.xN + _teamGapX, d.yN + _teamGap);
   return { x: px.x - 28, y: px.y - 56, s: d.scale, rz: d.rotZ, ry: d.rotY };
 }
 

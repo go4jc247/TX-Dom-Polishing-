@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.7.5 — Score and marks together in each team box
+// Version: v14.7.6 — Texas 42 history: 7 and a quarter across, 1px gaps
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.7.5';
+const CACHE_NAME = 'tx-dom-v14.7.6';
 const urlsToCache = [
   './index.html',
   './sw.js',
