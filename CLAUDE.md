@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.7.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.7.2 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -213,7 +213,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.7.1): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.7.2): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -326,6 +326,14 @@ function _lazyLoad(src, cb) {
      (FANCY_LINE_ENABLED, PIPFX_ENABLED); other styles restore from BASE (as loaded at startup, incl.
      saved tweaks). withLook() snapshots/restores all keys. Old 'tn51_domino_original' key is deleted.
      Verified pixel-identical to v14.5.6 defaults even with old tweaks saved.
+   v14.7.2: OWNER: T42 upright was already right in v13 - "use the OG for comparison (only dominoes and
+     markers)". Upright T42 is now the v13 CROSS: play line half-way between P3's row and your hand;
+     P2/P4 columns centred on it at the screen edges; P2/P4 tags + play spots ON the line (tag centred
+     between column and play spot); P3 play above LEAD, yours below; P3/You tags half-way between play
+     spot and their dominoes; played tiles SAME size as opponents' (size = largest where the row across
+     column|tag|play|LEAD|play|tag|column fits). New top (history/scores) and trump corner kept.
+     Lesson: when the owner says an older version was right, measure it and match it - don't redesign.
+     Sideways T42 still uses the v14.7.0 engine.
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.

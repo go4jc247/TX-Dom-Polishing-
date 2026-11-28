@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.7.1'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.2'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2750,30 +2750,53 @@ function computeT42AutoLayout(){
     var tbH = tbEl ? tbEl.offsetHeight : 44;
     tabL = m; tabR = W - m; tabT = scoreTop + tbH + m; tabB = handTop - m;
     var availWp = tabR - tabL;
-    // Trump marker in the table's top-left corner (as TN51 upright), so P3's row and P2's
-    // column must leave that corner free
-    var capP = Math.min(1.2, 0.75 * Math.max(1, W / 430));
-    for(var sp0 = capP; sp0 >= 0.3 && !best; sp0 -= 0.02){
-      var Dp = 112 * sp0, lenp = rowLen(sp0);
-      if(lenp > availWp - 2 * (TRW + G + 4)) continue;
-      var rowBottomP = tabT + Dp;
-      var colTop = Math.max(rowBottomP + G, tabT + 4 + TRH + G);
-      if(colTop + lenp > tabB) continue;
-      var cP = _t42BestPlay(handCX, tabL + Dp, tabR - Dp, rowBottomP, handTop, TAGW, TAGH, 1.0 * sp0, 1.3 * sp0);
-      if(cP) best = { so: sp0, sh: s1, c: cP, handTop: handTop, colInL: tabL + Dp, colInR: tabR - Dp, rowBottom: rowBottomP, colCY: colTop + lenp / 2 };
+    // v14.7.2: upright uses the ORIGINAL (v13) Texas 42 arrangement the owner asked for - a cross
+    // centred on LEAD: the middle of P2's and P4's columns is level with LEAD; P2/P4 tags and play
+    // spots sit on that same line; P3's play straight above LEAD, yours straight below; P3/You tags
+    // half-way between their play spot and their dominoes; played tiles the SAME size as the
+    // opponents'. Measured from the owner's v13 screenshot (390x844).
+    var sideM = Math.max(2, ins.l), TW = 32, TH = 22, g4 = 4;
+    var Wc = W - 2 * sideM;
+    // across the play line: column | tag | play | LEAD | play | tag | column
+    function acrossFits(sx){
+      var LW = Math.max(40, 71 * sx + 4);
+      return 2 * (112 * sx + g4 + TW + g4 + 112 * sx + g4) + LW <= Wc;
     }
-    if(!best){
-      var Dq = 112 * 0.3;
-      best = { so: 0.3, sh: s1, handTop: handTop, colInL: tabL + Dq, colInR: tabR - Dq, rowBottom: tabT + Dq, colCY: (tabT + Dq + tabB) / 2,
-               c: _t42Cluster(handCX, tabL + Dq, tabR - Dq, tabT + Dq, handTop, TAGW, TAGH, 0.3) };
+    var sx0 = 0.9;
+    while(sx0 > 0.3 && !acrossFits(sx0)) sx0 -= 0.01;
+    // the trump corner: P3's row must leave room for the trump marker on the left
+    while(sx0 > 0.3 && rowLen(sx0) > availWp - 2 * (TRW + G + 4)) sx0 -= 0.01;
+    // P3's row, then the columns centred on the play line, must fit above your hand
+    var sO, rowBot, playY;
+    for(sO = sx0; sO >= 0.3; sO -= 0.01){
+      rowBot = tabT + 112 * sO;
+      var lenO = rowLen(sO);
+      var colTopMin = Math.max(rowBot + g4, tabT + 4 + TRH + g4);
+      if(colTopMin + lenO <= tabB) break;
     }
+    var lenF = rowLen(sO);
+    // play line: half-way between P3's row and your hand, kept where the columns still fit
+    playY = (rowBot + handTop) / 2;
+    var cTop = Math.max(rowBot + g4, tabT + 4 + TRH + g4);
+    playY = Math.min(Math.max(playY, cTop + lenF / 2), tabB - lenF / 2);
+    var hwO = 56 * sO, hhO = 28 * sO, LWo = Math.max(40, 71 * sO + 4), LHo = LWo * 1.4;
+    var o3y = playY - (LHo / 2 + g4 * 2 + hhO), o1y = playY + (LHo / 2 + g4 * 2 + hhO);
+    var o2x = handCX - (LWo / 2 + g4 + hwO), o4x = handCX + (LWo / 2 + g4 + hwO);
+    var cIn = sideM + 112 * sO;                                   // inner edge of P2's column
+    var t2x = (cIn + (o2x - hwO)) / 2, t4x = W - t2x;             // tags centred in the gap
+    best = { so: sO, sh: s1, handTop: handTop, colInL: cIn, colInR: W - cIn, rowBottom: rowBot, colCY: playY,
+             colX2: sideM + 56 * sO, colX4: W - sideM - 56 * sO,
+             c: { sp: sO, ly: playY,
+                  tiles: { 1: [handCX, o1y], 2: [o2x, playY], 3: [handCX, o3y], 4: [o4x, playY] },
+                  tags:  { 1: [handCX, (o1y + hhO + handTop) / 2], 2: [t2x, playY],
+                           3: [handCX, (rowBot + o3y - hhO) / 2], 4: [t4x, playY] } } };
     _trumpSpot = { left: tabL + 4, top: tabT + 4 };
   }
 
   var sOpp = best.so, Dd = 112 * sOpp, pitchO = 56 * sOpp * OPP, cx = handCX;
   S.p2Scale = S.p3Scale = S.p4Scale = sOpp;
-  S.p2x = (tabL + Dd / 2) / W; S.p2y = best.colCY / H; S.p2Spacing = pitchO / H;
-  S.p4x = (tabR - Dd / 2) / W; S.p4y = best.colCY / H; S.p4Spacing = pitchO / H;
+  S.p2x = (best.colX2 || (tabL + Dd / 2)) / W; S.p2y = best.colCY / H; S.p2Spacing = pitchO / H;
+  S.p4x = (best.colX4 || (tabR - Dd / 2)) / W; S.p4y = best.colCY / H; S.p4Spacing = pitchO / H;
   S.p3x = (cx - 3 * pitchO) / W; S.p3y = (tabT + Dd / 2) / H; S.p3Spacing = pitchO / W; S.p3xOff = 0;
   var pitch1 = 56 * s1 * (1 + GAP);
   S.p1Scale = s1; S.p1Spacing = pitch1 / W;
