@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.6.4 — Pattern direction; Marble and Flowers tiles
+// Version: v14.6.5 — Original domino style restored in the picker
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.6.4';
+const CACHE_NAME = 'tx-dom-v14.6.5';
 const urlsToCache = [
   './index.html',
   './sw.js',

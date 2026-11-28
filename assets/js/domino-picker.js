@@ -10,8 +10,30 @@
 
   var CLASSIC_DOTS = ['#141416','#36b258','#f0c73d','#e74c3c','#00b2ff','#9b59b6','#a76e34','#3b82f6'];
 
+  // v14.6.5: "Original" = exactly how the dominoes looked before the picker existed. Taken from
+  // DOMINO_STYLE as the game set it up (built-in values + the old Domino Style panel's saved
+  // colours) plus the old Pip Colors panel's saved dots. Stored once so it never drifts.
+  var ORIGINAL = (function(){
+    try{ var o = JSON.parse(localStorage.getItem('tn51_domino_original') || 'null'); if(o && o.v === 1) return o; }catch(e){}
+    var D = (typeof DOMINO_STYLE !== 'undefined') ? DOMINO_STYLE : null;
+    var o = { v:1,
+      face: D ? D.FACE.NORMAL : 'rgba(245,236,221,0.96)', hi: D ? D.FACE.HIGHLIGHTED : 'rgba(255,255,255,1.0)',
+      back: D ? D.BACK.NORMAL : 'rgba(232,222,205,0.92)', backHi: D ? D.BACK.HIGHLIGHTED : 'rgba(245,240,230,0.95)',
+      edge: D ? D.EDGE.NORMAL : '#d7d7d7', edgeHi: D ? D.EDGE.HIGHLIGHTED : '#e8e8e8',
+      fancy: D ? D.FANCY_LINE_COLOR : 'rgba(0,0,0,0.90)', line: D ? D.CENTER_LINE_COLOR : 'rgba(0,0,0,0.22)',
+      bevel: D ? D.BEVEL_OPACITY : 0.40,
+      dots: D ? [0,1,2,3,4,5,6,7].map(function(i){ return D.PIP_COLORS[i]; }) : null };
+    try{
+      var pc = JSON.parse(localStorage.getItem('tn51_pip_colors') || 'null');
+      if(pc && o.dots) for(var k in pc){ var i = parseInt(k,10); if(i>=0 && i<=7) o.dots[i] = pc[k]; }
+    }catch(e){}
+    try{ localStorage.setItem('tn51_domino_original', JSON.stringify(o)); }catch(e){}
+    return o;
+  })();
+
   // Face colours offered in Custom (and used by the presets)
   var FACES = {
+    original: { name:'Original', original:true, face:ORIGINAL.face, hi:ORIGINAL.hi, back:ORIGINAL.back, edge:ORIGINAL.edge },
     ivory: { name:'Ivory', face:'#f7dca1', hi:'#fbe9c2', back:'#e8decd', edge:'#d7c9a8', line:'dark', tex:'ivory' },
     white: { name:'White', face:'#f9f8f9', hi:'#ffffff', back:'#ecebe6', edge:'#d0d0d0', line:'dark', tex:'white' },
     cream: { name:'Cream', face:'#fde6a7', hi:'#fff0c8', back:'#e2d3b0', edge:'#d8c48f', line:'dark', tex:'cream' },
@@ -23,6 +45,7 @@
   };
 
   var PRESETS = [
+    { id:'original',   name:'Original',   tag:'Your look from before',     face:'original', dots:ORIGINAL.dots },
     { id:'classic',    name:'Classic',    tag:'A colour for every number', face:'ivory', dots:CLASSIC_DOTS },
     { id:'tournament', name:'Tournament', tag:'Crisp white, black dots',   face:'white', dots:fill('#141416') },
     { id:'midnight',   name:'Midnight',   tag:'Black tiles, white dots',   face:'black', dots:fill('#f4f1ea') },
@@ -67,13 +90,12 @@
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
   function defaultLook(){
-    var look = { preset:'classic', custom:{ face:'ivory', mode:'each', one:'#141416', each:CLASSIC_DOTS.slice() } };
+    var look = { preset:'original', custom:{ face:'ivory', mode:'each', one:'#141416', each:CLASSIC_DOTS.slice() } };
     // Carry over colours chosen in the old Pip Colors panel, if any
     try{
       var old = JSON.parse(localStorage.getItem('tn51_pip_colors') || 'null');
       if(old){
         for(var k in old){ var i=parseInt(k,10); if(i>=0 && i<=7) look.custom.each[i] = toHex(old[k]); }
-        look.preset = 'custom';
       }
     }catch(e){}
     return look;
@@ -101,6 +123,18 @@
   function applyToStyle(look){
     if(typeof DOMINO_STYLE === 'undefined') return;
     var r = resolve(look), f = r.face, light = f.line==='light';
+    if(f.original){
+      // Put back every value exactly as it was, flat face with no texture
+      DOMINO_STYLE.FACE.NORMAL = ORIGINAL.face; DOMINO_STYLE.FACE.HIGHLIGHTED = ORIGINAL.hi;
+      DOMINO_STYLE.BACK.NORMAL = ORIGINAL.back; DOMINO_STYLE.BACK.HIGHLIGHTED = ORIGINAL.backHi;
+      DOMINO_STYLE.EDGE.NORMAL = ORIGINAL.edge; DOMINO_STYLE.EDGE.HIGHLIGHTED = ORIGINAL.edgeHi;
+      DOMINO_STYLE.FANCY_LINE_COLOR = ORIGINAL.fancy; DOMINO_STYLE.CENTER_LINE_COLOR = ORIGINAL.line;
+      DOMINO_STYLE.BEVEL_OPACITY = ORIGINAL.bevel;
+      DOMINO_STYLE.FACE_GRAIN = false; DOMINO_STYLE.FACE_TEXTURE = null; DOMINO_STYLE.TEX_DIR = 'same';
+      DOMINO_STYLE.PIP_GLOW = false;
+      for(var j=0;j<8;j++) DOMINO_STYLE.PIP_COLORS[j] = r.dots[j];
+      return;
+    }
     DOMINO_STYLE.FACE.NORMAL = f.face;
     DOMINO_STYLE.FACE.HIGHLIGHTED = f.hi;
     DOMINO_STYLE.BACK.NORMAL = f.back;
@@ -214,6 +248,7 @@
     // Face chips
     var faces = root.querySelector('.dpFaces');
     Object.keys(FACES).forEach(function(k){
+      if(FACES[k].original) return;   // Original is a full style, not a Custom tile colour
       var b = el('button','dpFace');
       b.dataset.face = k;
       b.innerHTML = '<span class="dpFaceDot" style="background:'+FACES[k].face+'"></span>'+FACES[k].name;
@@ -267,7 +302,7 @@
     });
 
     root.querySelector('.dpSurprise').onclick = function(){
-      var keys = Object.keys(FACES);
+      var keys = Object.keys(FACES).filter(function(k){ return !FACES[k].original; });
       var face = keys[Math.floor(Math.random()*keys.length)];
       var dark = FACES[face].line==='light';
       var pool = SWATCHES.filter(function(c){ return dark ? c!=='#141416' && c!=='#5b3a1e' : c!=='#f4f1ea'; });
