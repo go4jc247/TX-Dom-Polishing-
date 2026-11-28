@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.6.2'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.6.3'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -5716,8 +5716,26 @@ function drawFace(ctx, tile, w, h, highlighted = false, valid = true, rotRad){
   roundRectPath(ctx, 0, 0, w, h, rCss);
   ctx.fill();
 
-  // v14.6.0: optional wood grain (Dominoes picker "Wood" face)
-  if (DOMINO_STYLE.FACE_GRAIN) {
+  // v14.6.3: real material texture on the face (Dominoes picker). Each tile shows a different
+  // part of the texture so a hand looks natural rather than stamped.
+  const tex = DOMINO_STYLE.FACE_TEXTURE;
+  if (tex && tex.complete && tex.naturalWidth) {
+    ctx.save();
+    roundRectPath(ctx, 0, 0, w, h, rCss); ctx.clip();
+    const tw = tex.naturalWidth, th = tex.naturalHeight;
+    const sh = th * 0.75, sw = Math.min(tw, sh * w / h);
+    const seed = ((Number(tile && tile[0]) || 0) * 8 + (Number(tile && tile[1]) || 0)) * 2654435761 >>> 0;
+    const sx = (seed % 1000) / 1000 * (tw - sw), sy = ((seed >>> 10) % 1000) / 1000 * (th - sh);
+    ctx.drawImage(tex, sx, sy, sw, sh, 0, 0, w, h);
+    // soft depth: a touch lighter at the top, darker at the bottom
+    const sg = ctx.createLinearGradient(0, 0, 0, h);
+    sg.addColorStop(0, "rgba(255,255,255,0.10)"); sg.addColorStop(1, "rgba(0,0,0,0.08)");
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, w, h);
+    if (highlighted) { ctx.fillStyle = "rgba(255,255,255,0.16)"; ctx.fillRect(0, 0, w, h); }
+    ctx.restore();
+  }
+  // v14.6.0: drawn wood grain - only a fallback until the wood texture has loaded
+  else if (DOMINO_STYLE.FACE_GRAIN) {
     ctx.save();
     roundRectPath(ctx, 0, 0, w, h, rCss); ctx.clip();
     ctx.strokeStyle = "rgba(60,30,10,0.13)"; ctx.lineWidth = Math.max(1, w * 0.012);

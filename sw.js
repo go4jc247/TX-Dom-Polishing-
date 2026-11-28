@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.6.2 — Dot colours: All the same, Mix and match, All different
+// Version: v14.6.3 — Real material textures on the domino faces
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.6.2';
+const CACHE_NAME = 'tx-dom-v14.6.3';
 const urlsToCache = [
   './index.html',
   './sw.js',
@@ -34,6 +34,12 @@ const urlsToCache = [
   './assets/images/logo-tn51.png',
   './assets/images/logo-t42.png',
   './assets/images/logo-moon.png',
+  './assets/images/textures/ivory.jpg',
+  './assets/images/textures/white.jpg',
+  './assets/images/textures/cream.jpg',
+  './assets/images/textures/wood.jpg',
+  './assets/images/textures/navy.jpg',
+  './assets/images/textures/black.jpg',
   // SFX
   './assets/audio/sfx-click.mp3',
   './assets/audio/sfx-play1.mp3',

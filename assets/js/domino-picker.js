@@ -12,12 +12,12 @@
 
   // Face colours offered in Custom (and used by the presets)
   var FACES = {
-    ivory: { name:'Ivory', face:'#f5ecdd', hi:'#ffffff', back:'#e8decd', edge:'#d7d7d7', line:'dark' },
-    white: { name:'White', face:'#fbfbf8', hi:'#ffffff', back:'#ecebe6', edge:'#d0d0d0', line:'dark' },
-    cream: { name:'Cream', face:'#efe2c4', hi:'#f8eed6', back:'#e2d3b0', edge:'#cdbb94', line:'dark' },
-    wood:  { name:'Wood',  face:'#c08a58', hi:'#d29d6a', back:'#a8743f', edge:'#8a5a2e', line:'dark', grain:true },
-    navy:  { name:'Navy',  face:'#1d2b4a', hi:'#2a3c63', back:'#16223b', edge:'#0f1729', line:'light' },
-    black: { name:'Black', face:'#1b1c20', hi:'#2b2d33', back:'#141518', edge:'#0c0c0e', line:'light' }
+    ivory: { name:'Ivory', face:'#f7dca1', hi:'#fbe9c2', back:'#e8decd', edge:'#d7c9a8', line:'dark', tex:'ivory' },
+    white: { name:'White', face:'#f9f8f9', hi:'#ffffff', back:'#ecebe6', edge:'#d0d0d0', line:'dark', tex:'white' },
+    cream: { name:'Cream', face:'#fde6a7', hi:'#fff0c8', back:'#e2d3b0', edge:'#d8c48f', line:'dark', tex:'cream' },
+    wood:  { name:'Wood',  face:'#da9a5c', hi:'#e6ad74', back:'#a8743f', edge:'#8a5a2e', line:'dark', grain:true, tex:'wood' },
+    navy:  { name:'Navy',  face:'#031a46', hi:'#0c2a63', back:'#16223b', edge:'#0f1729', line:'light', tex:'navy' },
+    black: { name:'Black', face:'#0b0b0c', hi:'#232327', back:'#141518', edge:'#0c0c0e', line:'light', tex:'black' }
   };
 
   var PRESETS = [
@@ -33,6 +33,20 @@
 
   var SWATCHES = ['#141416','#f4f1ea','#5b3a1e','#d62828','#ff7a1a','#e8b923','#2f9e44','#0ea5a4',
                   '#1d4ed8','#6d28d9','#c026d3','#9ca3af','#39ff88','#25e8ff','#ff4fd8','#c9a227'];
+
+  // v14.6.3: material textures (assets/images/textures/*.jpg), loaded once and shared
+  var TEX = {}, texWaiters = [];
+  function getTex(k){
+    if(!k) return null;
+    if(!TEX[k]){
+      var im = new Image();
+      im.onload = function(){ texWaiters.forEach(function(f){ try{ f(); }catch(e){} }); };
+      im.src = './assets/images/textures/' + k + '.jpg';
+      TEX[k] = im;
+    }
+    return TEX[k];
+  }
+  function onTexLoad(f){ texWaiters.push(f); }
 
   function same(a,b){ return String(a).toLowerCase()===String(b).toLowerCase(); }
   // Give every number 1-7 its own colour: repeats get the next unused swatch
@@ -95,6 +109,7 @@
     DOMINO_STYLE.CENTER_LINE_COLOR = light ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.22)';
     DOMINO_STYLE.BEVEL_OPACITY = light ? 0.12 : 0.40;
     DOMINO_STYLE.FACE_GRAIN = !!f.grain;
+    DOMINO_STYLE.FACE_TEXTURE = getTex(f.tex);
     DOMINO_STYLE.PIP_GLOW = r.glow;
     for(var i=0;i<8;i++) DOMINO_STYLE.PIP_COLORS[i] = r.dots[i];
   }
@@ -122,18 +137,23 @@
     var keep = JSON.stringify({ F:DOMINO_STYLE.FACE, B:DOMINO_STYLE.BACK, E:DOMINO_STYLE.EDGE, P:DOMINO_STYLE.PIP_COLORS,
       fl:DOMINO_STYLE.FANCY_LINE_COLOR, cl:DOMINO_STYLE.CENTER_LINE_COLOR, bo:DOMINO_STYLE.BEVEL_OPACITY,
       g:DOMINO_STYLE.FACE_GRAIN, gl:DOMINO_STYLE.PIP_GLOW });
+    var keepTex = DOMINO_STYLE.FACE_TEXTURE;
     applyToStyle(look); fn();
     var k = JSON.parse(keep);
     Object.assign(DOMINO_STYLE.FACE,k.F); Object.assign(DOMINO_STYLE.BACK,k.B); Object.assign(DOMINO_STYLE.EDGE,k.E);
     Object.assign(DOMINO_STYLE.PIP_COLORS,k.P);
     DOMINO_STYLE.FANCY_LINE_COLOR=k.fl; DOMINO_STYLE.CENTER_LINE_COLOR=k.cl; DOMINO_STYLE.BEVEL_OPACITY=k.bo;
-    DOMINO_STYLE.FACE_GRAIN=k.g; DOMINO_STYLE.PIP_GLOW=k.gl;
+    DOMINO_STYLE.FACE_GRAIN=k.g; DOMINO_STYLE.PIP_GLOW=k.gl; DOMINO_STYLE.FACE_TEXTURE=keepTex;
   }
 
   // ---------- state ----------
   var current = load() || defaultLook();
   if(!current.custom) current.custom = defaultLook().custom;
   applyToStyle(current);
+  // When a texture finishes loading, redraw the game tiles and the open picker
+  onTexLoad(function(){ redrawGame(); if(root && root.classList.contains('show')) render(false); });
+  // Preload every texture so the picker cards show them straight away
+  Object.keys(FACES).forEach(function(k){ getTex(FACES[k].tex); });
 
   // ---------- UI ----------
   var root, draft, selNum = 1;
