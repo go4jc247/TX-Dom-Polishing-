@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.7.4'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.5'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -5227,8 +5227,9 @@ function updateScoreDisplay(){
   // Update tally marks
   const canvas1 = document.getElementById('tallyCanvas1');
   const canvas2 = document.getElementById('tallyCanvas2');
-  drawTallyMarks(canvas1, team1Marks, 'rgba(59,130,246,0.9)', 'left');   // Team 1 (blue) from the left edge
-  drawTallyMarks(canvas2, team2Marks, 'rgba(239,68,68,0.9)', 'right');   // Team 2 (red) from the right edge
+  // v14.7.5: each team's marks sit in that team's own score box, starting next to the score
+  drawTallyMarks(canvas1, team1Marks, 'rgba(59,130,246,0.9)', 'left');
+  drawTallyMarks(canvas2, team2Marks, 'rgba(239,68,68,0.9)', 'left');
 }
 // v14.5.4: marks are sized to their box, so redraw them when the layout changes
 window.addEventListener('resize', function(){ clearTimeout(window._marksRedraw); window._marksRedraw = setTimeout(function(){ try { updateScoreDisplay(); } catch(e){} }, 450); });

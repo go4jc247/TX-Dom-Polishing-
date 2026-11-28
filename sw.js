@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.7.4 — Status ticker removed from the screen
+// Version: v14.7.5 — Score and marks together in each team box
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.7.4';
+const CACHE_NAME = 'tx-dom-v14.7.5';
 const urlsToCache = [
   './index.html',
   './sw.js',

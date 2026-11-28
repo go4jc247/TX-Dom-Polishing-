@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.7.4 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.7.5 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -213,7 +213,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.7.4): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.7.5): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -343,6 +343,10 @@ function _lazyLoad(src, cb) {
    v14.7.4: owner: "get rid of that ticker" - #statusBar is display:none everywhere (CSS). setStatus()
      still runs (it drives the turn-tag glow via _updateTurnTag). T42 sideways no longer nudges the
      hand for it (statusRight = 0 when hidden). The centre pop-ups carry the important messages.
+   v14.7.5: separate MARKS pill REMOVED (owner asked: score + marks in each team's own box). index.html:
+     #tallyCanvas1/2 now sit in .pillMarks inside #team1Pill/#team2Pill; #topRow is a 2-column grid.
+     Upright: name+score left, marks beside them; sideways: name+score on top, marks underneath (taller).
+     Both teams' marks draw from the left. updateScoreDisplay's 'marksPill' lookups are null-safe.
    NEXT (owner's ideas, NOT started - he said "not right now"):
      - menu (hamburger) to the TOP LEFT (owner is left-handed); a BONES button in the top-right slot
        instead of the thin side tab on the history box

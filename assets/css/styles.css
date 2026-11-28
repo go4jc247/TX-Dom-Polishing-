@@ -2217,3 +2217,24 @@ body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
 /* v14.7.4: owner - the status ticker is an annoyance; the centre pop-ups already say what matters.
    Hidden everywhere (setStatus still runs, so the turn-tag glow keeps working). */
 #statusBar{ display:none !important; }
+
+/* ==================== v14.7.5: score + marks in one box per team ====================
+   Owner: the separate MARKS box didn't say whose marks were whose. Each team box now holds its
+   name, score and tally marks. Upright the two boxes share the row (wider); sideways each box is
+   taller, with the marks under the score. */
+#topbar #topRow{ display:grid !important; grid-template-columns:1fr 1fr !important; gap:6px !important; }
+#topbar .scorePill{ display:grid !important; grid-template-columns:auto 1fr; grid-template-rows:auto auto auto;
+  column-gap:10px; align-items:center !important; min-width:0 !important; flex:none !important; position:relative; }
+#topbar .scorePill .scoreLabel{ grid-column:1; grid-row:1; }
+#topbar .scorePill .scoreValue{ grid-column:1; grid-row:2; }
+#topbar .scorePill .pillMarks{ grid-column:2; grid-row:1 / span 2; align-self:stretch; min-width:0; position:relative; min-height:26px; }
+#topbar .scorePill .scoreBar{ grid-column:1 / -1; grid-row:3; position:static !important; width:100% !important; margin-top:4px !important; }
+#topbar .pillMarks .tallyCanvas{ position:absolute; inset:0; width:100% !important; height:100% !important; max-width:none !important; display:block; }
+/* sideways: taller boxes, marks under the score */
+body.landscapeLayout #topbar #topRow{ grid-template-columns:1fr 1fr !important; gap:4px !important; }
+body.landscapeLayout #topbar .scorePill{ grid-template-columns:1fr auto !important; grid-template-rows:auto auto auto !important;
+  flex-direction:initial !important; padding:5px 7px 6px !important; }
+body.landscapeLayout #topbar .scorePill .scoreLabel{ grid-column:1; grid-row:1; }
+body.landscapeLayout #topbar .scorePill .scoreValue{ grid-column:2; grid-row:1; }
+body.landscapeLayout #topbar .scorePill .pillMarks{ grid-column:1 / -1; grid-row:2; min-height:26px; margin-top:3px; }
+body.landscapeLayout #topbar .scorePill .scoreBar{ grid-column:1 / -1; grid-row:3; position:static !important; }
