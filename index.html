@@ -351,7 +351,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div style="text-align:center;">
       <div style="font-size:24px;font-weight:800;color:#fff;margin-bottom:4px;">TN51 / TX42 Dominoes</div>
-      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.5.6</div>
+      <div style="font-size:16px;font-weight:700;color:#60a5fa;margin-bottom:12px;" id="aboutVersion">v14.6.0</div>
       <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
         <div>Built: February 2026</div>
         <div>Game modes: Tennessee 51, Texas 42</div>
@@ -967,16 +967,6 @@ if ('serviceWorker' in navigator) {
 
     </div>
 
-    <div style="border-top:1px solid rgba(255,255,255,0.15);padding:12px 16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:13px;color:rgba(255,255,255,0.8);font-weight:600;">Developer Mode</span>
-        <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;">
-          <input type="checkbox" id="chkDevMode" style="opacity:0;width:0;height:0;">
-          <span style="position:absolute;inset:0;background:rgba(255,255,255,0.2);border-radius:12px;transition:0.3s;"></span>
-          <span id="devModeKnob" style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
-        </label>
-      </div>
-    </div>
     </div><!-- end scrollable modalBody -->
     <div class="modalFooter" style="border-top:1px solid rgba(255,255,255,0.15);padding:12px 16px;text-align:center;display:flex;gap:12px;justify-content:center;flex-shrink:0;">
       <button class="glossBtn" id="btnGameSettingsBack" style="padding:10px 24px;font-size:14px;font-weight:600;border-radius:10px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;">Back</button>
@@ -1195,6 +1185,7 @@ if ('serviceWorker' in navigator) {
 <script src="./assets/js/ai-engine.js" defer></script>
 <script src="./assets/js/mp-social.js" defer></script>
 <script src="./assets/js/orientation.js" defer></script>
+<script src="./assets/js/domino-picker.js" defer></script>
 <script src="./assets/js/popup-config.js" defer></script>
 <!-- v14.0.2: these used to be lazy-loaded, but nothing ever loaded them, so their menu
      buttons (Monte Carlo, Replay, Notes, Resume, logs) did nothing and saving was off. -->
@@ -1202,232 +1193,6 @@ if ('serviceWorker' in navigator) {
 <script src="./assets/js/dev-tools.js" defer></script>
 <script src="./assets/js/monte-carlo.js" defer></script>
 
-<!-- TN51 Layout Settings Popup -->
-<div id="tn51SettingsBackdrop" class="modalBackdrop" style="display:none;z-index:2000;">
-  <div class="modal" style="width:87%;max-width:87%;max-height:85%;overflow-y:auto;">
-    <div class="modalHeader" style="padding:12px 16px;">
-      <span style="font-weight:700;font-size:15px;">TN51 Layout Settings</span>
-      <button class="closeBtn" id="btnCloseTn51Settings">&times;</button>
-    </div>
-    <div class="modalBody" style="padding:12px 16px;">
-      <div class="t42s-section">Player 1 (You - Bottom)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.5" max="1.5" step="0.01" id="tn51s_p1Scale"><span id="tn51sv_p1Scale"></span></div>
-      <div class="t42s-group"><label>X (Start)</label><input type="range" min="0.5" max="1.0" step="0.005" id="tn51s_p1x"><span id="tn51sv_p1x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.75" max="0.99" step="0.005" id="tn51s_p1y"><span id="tn51sv_p1y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.08" max="0.25" step="0.001" id="tn51s_p1Spacing"><span id="tn51sv_p1Spacing"></span></div>
-
-      <div class="t42s-section">Player 2 (Bottom-Left)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_p2Scale"><span id="tn51sv_p2Scale"></span></div>
-      <div class="t42s-group"><label>X</label><input type="range" min="0.05" max="0.35" step="0.005" id="tn51s_p2x"><span id="tn51sv_p2x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.50" max="0.80" step="0.005" id="tn51s_p2y"><span id="tn51sv_p2y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.01" max="0.06" step="0.001" id="tn51s_p2Spacing"><span id="tn51sv_p2Spacing"></span></div>
-
-      <div class="t42s-section">Player 3 (Top-Left)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_p3Scale"><span id="tn51sv_p3Scale"></span></div>
-      <div class="t42s-group"><label>X</label><input type="range" min="0.05" max="0.35" step="0.005" id="tn51s_p3x"><span id="tn51sv_p3x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.35" max="0.65" step="0.005" id="tn51s_p3y"><span id="tn51sv_p3y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.01" max="0.06" step="0.001" id="tn51s_p3Spacing"><span id="tn51sv_p3Spacing"></span></div>
-
-      <div class="t42s-section">Player 4 (Top - Partner)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_p4Scale"><span id="tn51sv_p4Scale"></span></div>
-      <div class="t42s-group"><label>X (Start)</label><input type="range" min="0.15" max="0.55" step="0.005" id="tn51s_p4x"><span id="tn51sv_p4x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.30" max="0.55" step="0.005" id="tn51s_p4y"><span id="tn51sv_p4y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.02" max="0.10" step="0.001" id="tn51s_p4Spacing"><span id="tn51sv_p4Spacing"></span></div>
-
-      <div class="t42s-section">Player 5 (Top-Right)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_p5Scale"><span id="tn51sv_p5Scale"></span></div>
-      <div class="t42s-group"><label>X</label><input type="range" min="0.65" max="0.95" step="0.005" id="tn51s_p5x"><span id="tn51sv_p5x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.35" max="0.65" step="0.005" id="tn51s_p5y"><span id="tn51sv_p5y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.01" max="0.06" step="0.001" id="tn51s_p5Spacing"><span id="tn51sv_p5Spacing"></span></div>
-
-      <div class="t42s-section">Player 6 (Bottom-Right)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_p6Scale"><span id="tn51sv_p6Scale"></span></div>
-      <div class="t42s-group"><label>X</label><input type="range" min="0.65" max="0.95" step="0.005" id="tn51s_p6x"><span id="tn51sv_p6x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.50" max="0.80" step="0.005" id="tn51s_p6y"><span id="tn51sv_p6y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.01" max="0.06" step="0.001" id="tn51s_p6Spacing"><span id="tn51sv_p6Spacing"></span></div>
-
-      <div class="t42s-section">Trick Area</div>
-      <div class="t42s-group"><label>Trick Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_trickScale"><span id="tn51sv_trickScale"></span></div>
-
-      <div class="t42s-section">Trick Positions</div>
-      <div class="t42s-group"><label>P1 Trick X</label><input type="range" min="0.2" max="0.8" step="0.005" id="tn51s_p1TrickX"><span id="tn51sv_p1TrickX"></span></div>
-      <div class="t42s-group"><label>P1 Trick Y</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_p1TrickY"><span id="tn51sv_p1TrickY"></span></div>
-      <div class="t42s-group"><label>P2 Trick X</label><input type="range" min="0.1" max="0.6" step="0.005" id="tn51s_p2TrickX"><span id="tn51sv_p2TrickX"></span></div>
-      <div class="t42s-group"><label>P2 Trick Y</label><input type="range" min="0.4" max="0.8" step="0.005" id="tn51s_p2TrickY"><span id="tn51sv_p2TrickY"></span></div>
-      <div class="t42s-group"><label>P3 Trick X</label><input type="range" min="0.1" max="0.6" step="0.005" id="tn51s_p3TrickX"><span id="tn51sv_p3TrickX"></span></div>
-      <div class="t42s-group"><label>P3 Trick Y</label><input type="range" min="0.3" max="0.7" step="0.005" id="tn51s_p3TrickY"><span id="tn51sv_p3TrickY"></span></div>
-      <div class="t42s-group"><label>P4 Trick X</label><input type="range" min="0.2" max="0.8" step="0.005" id="tn51s_p4TrickX"><span id="tn51sv_p4TrickX"></span></div>
-      <div class="t42s-group"><label>P4 Trick Y</label><input type="range" min="0.3" max="0.7" step="0.005" id="tn51s_p4TrickY"><span id="tn51sv_p4TrickY"></span></div>
-      <div class="t42s-group"><label>P5 Trick X</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_p5TrickX"><span id="tn51sv_p5TrickX"></span></div>
-      <div class="t42s-group"><label>P5 Trick Y</label><input type="range" min="0.3" max="0.7" step="0.005" id="tn51s_p5TrickY"><span id="tn51sv_p5TrickY"></span></div>
-      <div class="t42s-group"><label>P6 Trick X</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_p6TrickX"><span id="tn51sv_p6TrickX"></span></div>
-      <div class="t42s-group"><label>P6 Trick Y</label><input type="range" min="0.4" max="0.8" step="0.005" id="tn51s_p6TrickY"><span id="tn51sv_p6TrickY"></span></div>
-
-      <div class="t42s-section">Lead Domino</div>
-      <div class="t42s-group"><label>Lead Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="tn51s_leadScale"><span id="tn51sv_leadScale"></span></div>
-      <div class="t42s-group"><label>Lead X</label><input type="range" min="0.2" max="0.8" step="0.005" id="tn51s_leadX"><span id="tn51sv_leadX"></span></div>
-      <div class="t42s-group"><label>Lead Y</label><input type="range" min="0.3" max="0.8" step="0.005" id="tn51s_leadY"><span id="tn51sv_leadY"></span></div>
-
-      <div class="t42s-section">Trick History</div>
-      <div class="t42s-group"><label>TH Scale</label><input type="range" min="0.15" max="0.6" step="0.005" id="tn51s_thScale"><span id="tn51sv_thScale"></span></div>
-      <div class="t42s-group"><label>TH Base X</label><input type="range" min="0.02" max="0.30" step="0.005" id="tn51s_thBaseX"><span id="tn51sv_thBaseX"></span></div>
-      <div class="t42s-group"><label>TH Base Y</label><input type="range" min="0.05" max="0.40" step="0.005" id="tn51s_thBaseY"><span id="tn51sv_thBaseY"></span></div>
-      <div class="t42s-group"><label>TH Row Spacing</label><input type="range" min="0.05" max="0.20" step="0.001" id="tn51s_thRowSpacing"><span id="tn51sv_thRowSpacing"></span></div>
-      <div class="t42s-group"><label>TH Col Spacing</label><input type="range" min="0.01" max="0.06" step="0.001" id="tn51s_thColSpacing"><span id="tn51sv_thColSpacing"></span></div>
-
-      <div class="t42s-section">Player Indicators</div>
-      <div class="t42s-group"><label>P1 Ind X</label><input type="range" min="0.2" max="0.8" step="0.005" id="tn51s_ind1x"><span id="tn51sv_ind1x"></span></div>
-      <div class="t42s-group"><label>P1 Ind Y</label><input type="range" min="0.5" max="0.9" step="0.005" id="tn51s_ind1y"><span id="tn51sv_ind1y"></span></div>
-      <div class="t42s-group"><label>P2 Ind X</label><input type="range" min="0.1" max="0.6" step="0.005" id="tn51s_ind2x"><span id="tn51sv_ind2x"></span></div>
-      <div class="t42s-group"><label>P2 Ind Y</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_ind2y"><span id="tn51sv_ind2y"></span></div>
-      <div class="t42s-group"><label>P3 Ind X</label><input type="range" min="0.1" max="0.6" step="0.005" id="tn51s_ind3x"><span id="tn51sv_ind3x"></span></div>
-      <div class="t42s-group"><label>P3 Ind Y</label><input type="range" min="0.3" max="0.7" step="0.005" id="tn51s_ind3y"><span id="tn51sv_ind3y"></span></div>
-      <div class="t42s-group"><label>P4 Ind X</label><input type="range" min="0.2" max="0.8" step="0.005" id="tn51s_ind4x"><span id="tn51sv_ind4x"></span></div>
-      <div class="t42s-group"><label>P4 Ind Y</label><input type="range" min="0.2" max="0.6" step="0.005" id="tn51s_ind4y"><span id="tn51sv_ind4y"></span></div>
-      <div class="t42s-group"><label>P5 Ind X</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_ind5x"><span id="tn51sv_ind5x"></span></div>
-      <div class="t42s-group"><label>P5 Ind Y</label><input type="range" min="0.3" max="0.7" step="0.005" id="tn51s_ind5y"><span id="tn51sv_ind5y"></span></div>
-      <div class="t42s-group"><label>P6 Ind X</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_ind6x"><span id="tn51sv_ind6x"></span></div>
-      <div class="t42s-group"><label>P6 Ind Y</label><input type="range" min="0.4" max="0.9" step="0.005" id="tn51s_ind6y"><span id="tn51sv_ind6y"></span></div>
-
-      <div style="text-align:center;margin-top:12px;">
-        <button class="glossBtn" id="btnTn51Reset" style="padding:6px 14px;font-size:12px;">Reset Defaults</button>
-        <button class="glossBtn" id="btnTn51Export" style="padding:6px 14px;font-size:12px;margin-left:8px;">Export Values</button>
-      </div>
-      <div style="text-align:center;margin-top:8px;">
-        <button class="glossBtn" id="btnDeviceSavePreset" style="padding:6px 14px;font-size:12px;">Save Device Preset</button>
-        <button class="glossBtn" id="btnDeviceLoadPreset" style="padding:6px 14px;font-size:12px;margin-left:8px;">Load Device Preset</button>
-      </div>
-      <div id="orientLabel" style="text-align:center;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.5);"></div>
-    </div>
-  </div>
-</div>
-
-<!-- T42 Layout Settings Popup -->
-<div id="t42SettingsBackdrop" class="modalBackdrop" style="display:none;z-index:2000;">
-  <div class="modal" style="width:87%;max-width:87%;max-height:85%;overflow-y:auto;">
-    <div class="modalHeader" style="padding:12px 16px;">
-      <span style="font-weight:700;font-size:15px;">T42 Layout Settings</span>
-      <button class="closeBtn" id="btnCloseT42Settings">&times;</button>
-    </div>
-    <div class="modalBody" style="padding:12px 16px;">
-      <div class="t42s-section">Player 1 (You - Bottom)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.5" max="1.5" step="0.01" id="t42s_p1Scale"><span id="t42sv_p1Scale"></span></div>
-      <div class="t42s-group"><label>X (Start)</label><input type="range" min="0.70" max="0.98" step="0.005" id="t42s_p1x"><span id="t42sv_p1x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.75" max="0.98" step="0.005" id="t42s_p1y"><span id="t42sv_p1y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.05" max="0.20" step="0.001" id="t42s_p1Spacing"><span id="t42sv_p1Spacing"></span></div>
-
-      <div class="t42s-section">Player 2 (Left Opponent)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="t42s_p2Scale"><span id="t42sv_p2Scale"></span></div>
-      <div class="t42s-group"><label>X</label><input type="range" min="0.03" max="0.35" step="0.005" id="t42s_p2x"><span id="t42sv_p2x"></span></div>
-      <div class="t42s-group"><label>Y (Center)</label><input type="range" min="0.40" max="0.80" step="0.005" id="t42s_p2y"><span id="t42sv_p2y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.02" max="0.08" step="0.001" id="t42s_p2Spacing"><span id="t42sv_p2Spacing"></span></div>
-
-      <div class="t42s-section">Player 3 (Top Partner)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="t42s_p3Scale"><span id="t42sv_p3Scale"></span></div>
-      <div class="t42s-group"><label>X (Start)</label><input type="range" min="0.15" max="0.50" step="0.005" id="t42s_p3x"><span id="t42sv_p3x"></span></div>
-      <div class="t42s-group"><label>Y</label><input type="range" min="0.30" max="0.55" step="0.005" id="t42s_p3y"><span id="t42sv_p3y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.03" max="0.10" step="0.001" id="t42s_p3Spacing"><span id="t42sv_p3Spacing"></span></div>
-
-      <div class="t42s-section">Player 4 (Right Opponent)</div>
-      <div class="t42s-group"><label>Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="t42s_p4Scale"><span id="t42sv_p4Scale"></span></div>
-      <div class="t42s-group"><label>X</label><input type="range" min="0.65" max="0.97" step="0.005" id="t42s_p4x"><span id="t42sv_p4x"></span></div>
-      <div class="t42s-group"><label>Y (Center)</label><input type="range" min="0.40" max="0.80" step="0.005" id="t42s_p4y"><span id="t42sv_p4y"></span></div>
-      <div class="t42s-group"><label>Spacing</label><input type="range" min="0.02" max="0.08" step="0.001" id="t42s_p4Spacing"><span id="t42sv_p4Spacing"></span></div>
-
-      <div class="t42s-section">Trick Area (Center)</div>
-      <div class="t42s-group"><label>Trick Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="t42s_trickScale"><span id="t42sv_trickScale"></span></div>
-      <div class="t42s-group"><label>P1 Trick X</label><input type="range" min="0.35" max="0.65" step="0.005" id="t42s_p1TrickX"><span id="t42sv_p1TrickX"></span></div>
-      <div class="t42s-group"><label>P1 Trick Y</label><input type="range" min="0.55" max="0.80" step="0.005" id="t42s_p1TrickY"><span id="t42sv_p1TrickY"></span></div>
-      <div class="t42s-group"><label>P2 Trick X</label><input type="range" min="0.25" max="0.50" step="0.005" id="t42s_p2TrickX"><span id="t42sv_p2TrickX"></span></div>
-      <div class="t42s-group"><label>P2 Trick Y</label><input type="range" min="0.45" max="0.75" step="0.005" id="t42s_p2TrickY"><span id="t42sv_p2TrickY"></span></div>
-      <div class="t42s-group"><label>P3 Trick X</label><input type="range" min="0.35" max="0.65" step="0.005" id="t42s_p3TrickX"><span id="t42sv_p3TrickX"></span></div>
-      <div class="t42s-group"><label>P3 Trick Y</label><input type="range" min="0.40" max="0.65" step="0.005" id="t42s_p3TrickY"><span id="t42sv_p3TrickY"></span></div>
-      <div class="t42s-group"><label>P4 Trick X</label><input type="range" min="0.50" max="0.75" step="0.005" id="t42s_p4TrickX"><span id="t42sv_p4TrickX"></span></div>
-      <div class="t42s-group"><label>P4 Trick Y</label><input type="range" min="0.45" max="0.75" step="0.005" id="t42s_p4TrickY"><span id="t42sv_p4TrickY"></span></div>
-      <div class="t42s-group"><label>Lead Scale</label><input type="range" min="0.2" max="0.8" step="0.01" id="t42s_leadScale"><span id="t42sv_leadScale"></span></div>
-      <div class="t42s-group"><label>Lead X</label><input type="range" min="0.35" max="0.65" step="0.005" id="t42s_leadX"><span id="t42sv_leadX"></span></div>
-      <div class="t42s-group"><label>Lead Y</label><input type="range" min="0.45" max="0.70" step="0.005" id="t42s_leadY"><span id="t42sv_leadY"></span></div>
-
-      <div class="t42s-section">Player Indicators</div>
-      <div class="t42s-group"><label>P1 Indicator X</label><input type="range" min="0.30" max="0.70" step="0.005" id="t42s_ind1x"><span id="t42sv_ind1x"></span></div>
-      <div class="t42s-group"><label>P1 Indicator Y</label><input type="range" min="0.65" max="0.95" step="0.005" id="t42s_ind1y"><span id="t42sv_ind1y"></span></div>
-      <div class="t42s-group"><label>P2 Indicator X</label><input type="range" min="0.05" max="0.40" step="0.005" id="t42s_ind2x"><span id="t42sv_ind2x"></span></div>
-      <div class="t42s-group"><label>P2 Indicator Y</label><input type="range" min="0.40" max="0.80" step="0.005" id="t42s_ind2y"><span id="t42sv_ind2y"></span></div>
-      <div class="t42s-group"><label>P3 Indicator X</label><input type="range" min="0.30" max="0.70" step="0.005" id="t42s_ind3x"><span id="t42sv_ind3x"></span></div>
-      <div class="t42s-group"><label>P3 Indicator Y</label><input type="range" min="0.35" max="0.60" step="0.005" id="t42s_ind3y"><span id="t42sv_ind3y"></span></div>
-      <div class="t42s-group"><label>P4 Indicator X</label><input type="range" min="0.60" max="0.95" step="0.005" id="t42s_ind4x"><span id="t42sv_ind4x"></span></div>
-      <div class="t42s-group"><label>P4 Indicator Y</label><input type="range" min="0.40" max="0.80" step="0.005" id="t42s_ind4y"><span id="t42sv_ind4y"></span></div>
-
-      <div class="t42s-section">Trick History</div>
-      <div class="t42s-group"><label>TH Scale</label><input type="range" min="0.15" max="0.6" step="0.005" id="t42s_thScale"><span id="t42sv_thScale"></span></div>
-      <div class="t42s-group"><label>TH Base X</label><input type="range" min="0.02" max="0.30" step="0.005" id="t42s_thBaseX"><span id="t42sv_thBaseX"></span></div>
-      <div class="t42s-group"><label>TH Base Y</label><input type="range" min="0.05" max="0.40" step="0.005" id="t42s_thBaseY"><span id="t42sv_thBaseY"></span></div>
-      <div class="t42s-group"><label>TH Row Spacing</label><input type="range" min="0.05" max="0.20" step="0.001" id="t42s_thRowSpacing"><span id="t42sv_thRowSpacing"></span></div>
-      <div class="t42s-group"><label>TH Col Spacing</label><input type="range" min="0.01" max="0.06" step="0.001" id="t42s_thColSpacing"><span id="t42sv_thColSpacing"></span></div>
-
-      <div style="text-align:center;margin-top:12px;">
-        <button class="glossBtn" id="btnT42Reset" style="padding:6px 14px;font-size:12px;">Reset Defaults</button>
-        <button class="glossBtn" id="btnT42Export" style="padding:6px 14px;font-size:12px;margin-left:8px;">Export Values</button>
-      </div>
-      <div style="text-align:center;margin-top:8px;">
-        <button class="glossBtn" id="btnT42DeviceSave" style="padding:6px 14px;font-size:12px;">Save Device Preset</button>
-        <button class="glossBtn" id="btnT42DeviceLoad" style="padding:6px 14px;font-size:12px;margin-left:8px;">Load Device Preset</button>
-      </div>
-      <div id="orientLabelT42" style="text-align:center;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.5);"></div>
-    </div>
-  </div>
-</div>
-<!-- Boneyard Settings Popup -->
-<div id="by2SettingsBackdrop" class="modalBackdrop" style="display:none;z-index:2100;">
-  <div class="modal" style="width:82%;max-width:82%;max-height:80%;overflow-y:auto;">
-    <div class="modalHeader" style="padding:12px 16px;">
-      <span style="font-weight:700;font-size:15px;">Boneyard Settings</span>
-      <button class="closeBtn" id="btnCloseBy2Settings">&times;</button>
-    </div>
-    <div class="modalBody" style="padding:12px 16px;">
-      <div class="t42s-section">Position</div>
-      <div class="t42s-group"><label>X Offset (%)</label><input type="range" min="0" max="20" step="0.5" id="by2s_xOffset"><span id="by2sv_xOffset"></span></div>
-      <div class="t42s-group"><label>Y Offset (%)</label><input type="range" min="5" max="35" step="0.5" id="by2s_yOffset"><span id="by2sv_yOffset"></span></div>
-      <div class="t42s-group"><label>Width (%)</label><input type="range" min="50" max="100" step="1" id="by2s_width"><span id="by2sv_width"></span></div>
-      <div class="t42s-group"><label>Height (%)</label><input type="range" min="10" max="60" step="0.5" id="by2s_height"><span id="by2sv_height"></span></div>
-      <div class="t42s-section">Tile Appearance</div>
-      <div class="t42s-group"><label>Tile Gap</label><input type="range" min="0" max="8" step="1" id="by2s_gap"><span id="by2sv_gap"></span></div>
-      <div class="t42s-group"><label>Played Tile Opacity</label><input type="range" min="0.1" max="1.0" step="0.01" id="by2s_playedOpacity"><span id="by2sv_playedOpacity"></span></div>
-      <div class="t42s-section">Hand Tile Border</div>
-      <div class="t42s-group"><label>Inner Border Size</label><input type="range" min="0" max="5" step="0.5" id="by2s_innerSize"><span id="by2sv_innerSize"></span></div>
-      <div class="t42s-group"><label>Inner Border Radius</label><input type="range" min="0" max="15" step="1" id="by2s_innerRadius"><span id="by2sv_innerRadius"></span></div>
-      <div class="t42s-group"><label>Inner Border Color</label><input type="color" id="by2s_innerColor" style="width:60px;height:24px;vertical-align:middle;"><span id="by2sv_innerColor" style="margin-left:6px;font-size:11px;color:#fff;"></span></div>
-      <div class="t42s-group"><label>Outer Border Size</label><input type="range" min="0" max="5" step="0.5" id="by2s_outerSize"><span id="by2sv_outerSize"></span></div>
-      <div class="t42s-group"><label>Outer Border Radius</label><input type="range" min="0" max="15" step="1" id="by2s_outerRadius"><span id="by2sv_outerRadius"></span></div>
-      <div class="t42s-group"><label>Outer Border Color</label><input type="color" id="by2s_outerColor" style="width:60px;height:24px;vertical-align:middle;"><span id="by2sv_outerColor" style="margin-left:6px;font-size:11px;color:#fff;"></span></div>
-      <div style="text-align:center;margin-top:12px;">
-        <button class="glossBtn" id="btnBy2Reset" style="padding:6px 14px;font-size:12px;">Reset Defaults</button>
-        <button class="glossBtn" id="btnBy2Export" style="padding:6px 14px;font-size:12px;margin-left:8px;">Export Values</button>
-      </div>
-      <div style="text-align:center;margin-top:8px;">
-        <button class="glossBtn" id="btnBy2DeviceSave" style="padding:6px 14px;font-size:12px;">Save Device Preset</button>
-        <button class="glossBtn" id="btnBy2DeviceLoad" style="padding:6px 14px;font-size:12px;margin-left:8px;">Load Device Preset</button>
-      </div>
-      <div id="orientLabelBy2" style="text-align:center;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.5);"></div>
-    </div>
-  </div>
-</div>
-<div id="devTabsWrap">
-<button id="devTabsArrowL" onclick="document.getElementById('devTabsBar').scrollBy({left:-120,behavior:'smooth'})">&lsaquo;</button>
-<button id="devTabsArrowR" onclick="document.getElementById('devTabsBar').scrollBy({left:120,behavior:'smooth'})">&rsaquo;</button>
-<div id="devTabsBar">
-<button id="tn51SettingsBtn">TN51 Layout</button>
-<button id="t42SettingsBtn">T42 Layout</button>
-<button id="moonSettingsBtn">Moon Layout</button>
-<button id="by2SettingsBtn">Boneyard</button>
-<button id="pipDetailsBtn">Pip Details</button>
-<button id="pipColorsBtn">Pip Colors</button>
-<button id="zIndexBtn">Z-Index</button>
-<button id="shuffleSettingsBtn" style="display:none;">Shuffle</button>
-<button id="exportAllBtn" onclick="if(typeof exportAllSettings==='function')exportAllSettings()">Export All</button>
-<button id="dominoStyleBtn">Domino Style</button>
-</div>
-</div>
 <!-- Lay Down Hand UI -->
 <div id="layDownBtnGroup">
   <button id="btnLayDown" onclick="showLayDownDialog()">Lay Down Hand</button>

@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.5.6 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.6.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -208,7 +208,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.5.6): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.6.0): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -273,6 +273,18 @@ function _lazyLoad(src, cb) {
    v14.5.6: owner prefers the ORIGINAL muted look - bright colours are harder to read for him. Tags
      use v13's muted team colours (#2b749d blue, #9e5e42 brick, measured from v13), score/marks boxes
      rgba(0,0,0,0.45). Don't brighten UI colours without asking.
+   v14.6.0: DEVELOPER MODE REMOVED (owner approved "remove it ... all traces"): Dev Mode switch, dev tab
+     bar, TN51/T42/Moon layout-slider windows, Boneyard/Pip Details/Pip Colors/Z-Index/Shuffle/Export
+     All/Domino Style panels, device presets (built-in + saved), custom-hand tester (+ its Replay
+     link), ghost preview dominoes. Saved values those panels wrote still LOAD at startup
+     (orientation.js keeps the loaders), so layouts/shuffle/pip details are unchanged. dev-tools.js
+     now only holds the Game Log / Advanced AI Log (kept; not dev-mode features).
+     NEW assets/js/domino-picker.js: "Dominoes" button on the home screen above New Game opens a
+     picker: 6 presets (Classic, Tournament, Midnight, Vintage, Casino, Neon) + Custom (face: Ivory,
+     White, Cream, Wood, Navy, Black; dots: one colour or a colour per number 1-7; Surprise me).
+     Saved as localStorage 'tn51_domino_look'; old 'tn51_pip_colors' migrates to Custom. Writes
+     DOMINO_STYLE (FACE/BACK/EDGE/PIP_COLORS + new FACE_GRAIN, PIP_GLOW read by drawFace).
+     window.openDominoPicker() - the owner will decide later where else it lives (settings menu).
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.

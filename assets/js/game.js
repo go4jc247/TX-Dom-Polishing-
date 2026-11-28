@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.5.6'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.6.0'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -2597,293 +2597,6 @@ let T42_SETTINGS = {
   thRowSpacing: 0.1111, thColSpacing: 0.0311,
 };
 
-// Ghost preview dominos for T42 Layout Settings
-var _t42GhostSprites = [];
-var _t42GhostTimer = null;
-
-function showT42GhostDominos(){
-  removeT42GhostDominos();
-  if(GAME_MODE !== 'T42') return;
-  const sprLayer = document.getElementById('spriteLayer');
-  if(!sprLayer) return;
-  const sampleTiles = [[6,6],[5,3],[4,2],[6,1]];
-  const positions = [
-    {name:'Player_1_Played_Domino'}, {name:'Player_2_Played_Domino'},
-    {name:'Player_3_Played_Domino'}, {name:'Player_4_Played_Domino'}
-  ];
-  for(let i = 0; i < 4; i++){
-    const section = getActiveLayout().sections.find(s => s.name === positions[i].name);
-    if(!section || !section.dominoes[0]) continue;
-    const d = section.dominoes[0];
-    const sprite = makeSprite(sampleTiles[i]);
-    const px = normToPx(d.xN, d.yN);
-    sprite.setPose({x: px.x - 28, y: px.y - 56, s: d.scale, rz: d.rotZ, ry: d.rotY});
-    sprite.style.opacity = '0.35';
-    sprite.style.pointerEvents = 'none';
-    if(sprite._shadow) sprite._shadow.style.opacity = '0.15';
-    sprLayer.appendChild(sprite);
-    if(sprite._shadow){
-      const shLayer = document.getElementById('shadowLayer');
-      if(shLayer) shLayer.appendChild(sprite._shadow);
-    }
-    _t42GhostSprites.push(sprite);
-  }
-  // Also show lead pip ghost
-  const leadSec = getActiveLayout().sections.find(s => s.name === 'Lead_Domino');
-  if(leadSec && leadSec.dominoes[0]){
-    const ld = leadSec.dominoes[0];
-    const lpx = normToPx(ld.xN, ld.yN);
-    const leadGhost = document.createElement('div');
-    leadGhost.style.cssText = 'position:absolute;width:28px;height:44px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:4px;pointer-events:none;z-index:50;';
-    leadGhost.style.left = (lpx.x - 14) + 'px';
-    leadGhost.style.top = (lpx.y - 22) + 'px';
-    leadGhost.textContent = 'L';
-    leadGhost.style.color = 'rgba(255,255,255,0.4)';
-    leadGhost.style.textAlign = 'center';
-    leadGhost.style.lineHeight = '44px';
-    leadGhost.style.fontSize = '11px';
-    document.getElementById('tableMain').appendChild(leadGhost);
-    _t42GhostSprites.push(leadGhost);
-  }
-  // V12.9.5: Indicator position ghosts
-  for(let _ip = 1; _ip <= 4; _ip++){
-    const _ix = T42_SETTINGS['ind'+_ip+'x'];
-    const _iy = T42_SETTINGS['ind'+_ip+'y'];
-    const _ipx = normToPx(_ix, _iy);
-    const _indG = document.createElement('div');
-    _indG.style.cssText = 'position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(96,165,250,0.25);border:1px solid rgba(96,165,250,0.5);pointer-events:none;z-index:50;text-align:center;line-height:28px;font-size:10px;color:rgba(96,165,250,0.7);';
-    _indG.style.left = (_ipx.x - 14) + 'px';
-    _indG.style.top = (_ipx.y - 14) + 'px';
-    _indG.textContent = 'P' + _ip;
-    document.getElementById('tableMain').appendChild(_indG);
-    _t42GhostSprites.push(_indG);
-  }
-  // V12.9.6: Trick history — full domino sprites at ALL positions (double blanks)
-  const _t42ThSec = getActiveLayout().sections.find(s => s.name === 'Trick_History');
-  if(_t42ThSec){
-    for(let _gIdx = 0; _gIdx < _t42ThSec.dominoes.length; _gIdx++){
-      const _gd = _t42ThSec.dominoes[_gIdx];
-      if(!_gd) continue;
-      const _thSprite = makeSprite([0,0]);
-      const _gpx = normToPx(_gd.xN, _gd.yN);
-      _thSprite.setPose({x: _gpx.x - 28, y: _gpx.y - 56, s: _gd.scale, rz: _gd.rotZ, ry: _gd.rotY});
-      _thSprite.style.opacity = '0.3';
-      _thSprite.style.pointerEvents = 'none';
-      if(_thSprite._shadow) _thSprite._shadow.style.opacity = '0.1';
-      sprLayer.appendChild(_thSprite);
-      if(_thSprite._shadow){
-        const _shL = document.getElementById('shadowLayer');
-        if(_shL) _shL.appendChild(_thSprite._shadow);
-      }
-      _t42GhostSprites.push(_thSprite);
-    }
-  }
-}
-
-function removeT42GhostDominos(){
-  for(const s of _t42GhostSprites){
-    if(s._shadow) s._shadow.remove();
-    s.remove();
-  }
-  _t42GhostSprites = [];
-  if(_t42GhostTimer){ clearTimeout(_t42GhostTimer); _t42GhostTimer = null; }
-}
-
-function refreshT42Ghosts(){
-  // Refresh ghost positions after slider change
-  showT42GhostDominos();
-}
-
-// V12.9.4: Ghost preview dominos for TN51 Layout Settings
-var _tn51GhostSprites = [];
-var _tn51GhostTimer = null;
-
-function showTN51GhostDominos(){
-  removeTN51GhostDominos();
-  if(GAME_MODE !== 'TN51') return;
-  const sprLayer = document.getElementById('spriteLayer');
-  if(!sprLayer) return;
-  const sampleTiles = [[6,6],[5,3],[4,2],[6,1],[3,0],[5,5]];
-  const positions = [
-    {name:'Player_1_Played_Domino'}, {name:'Player_2_Played_Domino'},
-    {name:'Player_3_Played_Domino'}, {name:'Player_4_Played_Domino'},
-    {name:'Player_5_Played_Domino'}, {name:'Player_6_Played_Domino'}
-  ];
-  for(let i = 0; i < 6; i++){
-    const section = getActiveLayout().sections.find(s => s.name === positions[i].name);
-    if(!section || !section.dominoes[0]) continue;
-    const d = section.dominoes[0];
-    const sprite = makeSprite(sampleTiles[i]);
-    const px = normToPx(d.xN, d.yN);
-    sprite.setPose({x: px.x - 28, y: px.y - 56, s: d.scale, rz: d.rotZ, ry: d.rotY});
-    sprite.style.opacity = '0.35';
-    sprite.style.pointerEvents = 'none';
-    if(sprite._shadow) sprite._shadow.style.opacity = '0.15';
-    sprLayer.appendChild(sprite);
-    if(sprite._shadow){
-      const shLayer = document.getElementById('shadowLayer');
-      if(shLayer) shLayer.appendChild(sprite._shadow);
-    }
-    _tn51GhostSprites.push(sprite);
-  }
-  // Lead pip ghost
-  const leadSec = getActiveLayout().sections.find(s => s.name === 'Lead_Domino');
-  if(leadSec && leadSec.dominoes[0]){
-    const ld = leadSec.dominoes[0];
-    const lpx = normToPx(ld.xN, ld.yN);
-    const leadGhost = document.createElement('div');
-    leadGhost.style.cssText = 'position:absolute;width:28px;height:44px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:4px;pointer-events:none;z-index:50;';
-    leadGhost.style.left = (lpx.x - 14) + 'px';
-    leadGhost.style.top = (lpx.y - 22) + 'px';
-    leadGhost.textContent = 'L';
-    leadGhost.style.color = 'rgba(255,255,255,0.4)';
-    leadGhost.style.textAlign = 'center';
-    leadGhost.style.lineHeight = '44px';
-    leadGhost.style.fontSize = '11px';
-    document.getElementById('tableMain').appendChild(leadGhost);
-    _tn51GhostSprites.push(leadGhost);
-  }
-  // V12.9.6: Trick history — full domino sprites at ALL positions (double blanks)
-  const _tn51ThSec = getActiveLayout().sections.find(s => s.name === 'Trick_History');
-  if(_tn51ThSec){
-    for(let _gIdx = 0; _gIdx < _tn51ThSec.dominoes.length; _gIdx++){
-      const _gd = _tn51ThSec.dominoes[_gIdx];
-      if(!_gd) continue;
-      const _thSprite = makeSprite([0,0]);
-      const _gpx = normToPx(_gd.xN, _gd.yN);
-      _thSprite.setPose({x: _gpx.x - 28, y: _gpx.y - 56, s: _gd.scale, rz: _gd.rotZ, ry: _gd.rotY});
-      _thSprite.style.opacity = '0.3';
-      _thSprite.style.pointerEvents = 'none';
-      if(_thSprite._shadow) _thSprite._shadow.style.opacity = '0.1';
-      sprLayer.appendChild(_thSprite);
-      if(_thSprite._shadow){
-        const _shL = document.getElementById('shadowLayer');
-        if(_shL) _shL.appendChild(_thSprite._shadow);
-      }
-      _tn51GhostSprites.push(_thSprite);
-    }
-  }
-  // Indicator position ghosts (small circles)
-  for(let p = 1; p <= 6; p++){
-    const ix = TN51_SETTINGS['ind'+p+'x'];
-    const iy = TN51_SETTINGS['ind'+p+'y'];
-    const ipx = normToPx(ix, iy);
-    const indGhost = document.createElement('div');
-    indGhost.style.cssText = 'position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(96,165,250,0.25);border:1px solid rgba(96,165,250,0.5);pointer-events:none;z-index:50;text-align:center;line-height:28px;font-size:10px;color:rgba(96,165,250,0.7);';
-    indGhost.style.left = (ipx.x - 14) + 'px';
-    indGhost.style.top = (ipx.y - 14) + 'px';
-    indGhost.textContent = 'P' + p;
-    document.getElementById('tableMain').appendChild(indGhost);
-    _tn51GhostSprites.push(indGhost);
-  }
-}
-
-function removeTN51GhostDominos(){
-  for(const s of _tn51GhostSprites){
-    if(s._shadow) s._shadow.remove();
-    s.remove();
-  }
-  _tn51GhostSprites = [];
-  if(_tn51GhostTimer){ clearTimeout(_tn51GhostTimer); _tn51GhostTimer = null; }
-}
-
-function refreshTN51Ghosts(){
-  showTN51GhostDominos();
-}
-
-// V12.9.5: Ghost preview dominos for Moon Layout Settings
-var _moonGhostSprites = [];
-
-function showMoonGhostDominos(){
-  removeMoonGhostDominos();
-  if(GAME_MODE !== 'MOON') return;
-  const sprLayer = document.getElementById('spriteLayer');
-  if(!sprLayer) return;
-  const sampleTiles = [[6,6],[5,3],[4,2]];
-  const positions = ['Player_1_Played_Domino','Player_2_Played_Domino','Player_3_Played_Domino'];
-  for(let i = 0; i < 3; i++){
-    const section = getActiveLayout().sections.find(s => s.name === positions[i]);
-    if(!section || !section.dominoes[0]) continue;
-    const d = section.dominoes[0];
-    const sprite = makeSprite(sampleTiles[i]);
-    const px = normToPx(d.xN, d.yN);
-    sprite.setPose({x: px.x - 28, y: px.y - 56, s: d.scale, rz: d.rotZ, ry: d.rotY});
-    sprite.style.opacity = '0.35';
-    sprite.style.pointerEvents = 'none';
-    if(sprite._shadow) sprite._shadow.style.opacity = '0.15';
-    sprLayer.appendChild(sprite);
-    if(sprite._shadow){
-      const shLayer = document.getElementById('shadowLayer');
-      if(shLayer) shLayer.appendChild(sprite._shadow);
-    }
-    _moonGhostSprites.push(sprite);
-  }
-  // Lead ghost
-  const leadSec = getActiveLayout().sections.find(s => s.name === 'Lead_Domino');
-  if(leadSec && leadSec.dominoes[0]){
-    const ld = leadSec.dominoes[0];
-    const lpx = normToPx(ld.xN, ld.yN);
-    const leadGhost = document.createElement('div');
-    leadGhost.style.cssText = 'position:absolute;width:28px;height:44px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:4px;pointer-events:none;z-index:50;';
-    leadGhost.style.left = (lpx.x - 14) + 'px';
-    leadGhost.style.top = (lpx.y - 22) + 'px';
-    leadGhost.textContent = 'L';
-    leadGhost.style.color = 'rgba(255,255,255,0.4)';
-    leadGhost.style.textAlign = 'center';
-    leadGhost.style.lineHeight = '44px';
-    leadGhost.style.fontSize = '11px';
-    document.getElementById('tableMain').appendChild(leadGhost);
-    _moonGhostSprites.push(leadGhost);
-  }
-  // Indicator ghosts
-  for(let p = 1; p <= 3; p++){
-    const ix = MOON_SETTINGS['ind'+p+'x'];
-    const iy = MOON_SETTINGS['ind'+p+'y'];
-    const ipx = normToPx(ix, iy);
-    const indGhost = document.createElement('div');
-    indGhost.style.cssText = 'position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(96,165,250,0.25);border:1px solid rgba(96,165,250,0.5);pointer-events:none;z-index:50;text-align:center;line-height:28px;font-size:10px;color:rgba(96,165,250,0.7);';
-    indGhost.style.left = (ipx.x - 14) + 'px';
-    indGhost.style.top = (ipx.y - 14) + 'px';
-    indGhost.textContent = 'P' + p;
-    document.getElementById('tableMain').appendChild(indGhost);
-    _moonGhostSprites.push(indGhost);
-  }
-  // V12.9.6: Trick history — full domino sprites at ALL positions (double blanks)
-  const _moonThSec = getActiveLayout().sections.find(s => s.name === 'Trick_History');
-  if(_moonThSec){
-    var _mThXOff = (MOON_SETTINGS.trickHistoryX || 0) / 100;
-    var _mThYOff = (MOON_SETTINGS.trickHistoryY || 0) / 100;
-    var _mThScale = MOON_SETTINGS.thScale || MOON_SETTINGS.trickScale || 0.30;
-    for(let _gIdx = 0; _gIdx < _moonThSec.dominoes.length; _gIdx++){
-      const _gd = _moonThSec.dominoes[_gIdx];
-      if(!_gd) continue;
-      const _thSprite = makeSprite([0,0]);
-      const _gpx = normToPx(_gd.xN + _mThXOff, _gd.yN + _mThYOff);
-      _thSprite.setPose({x: _gpx.x - 28, y: _gpx.y - 56, s: _mThScale, rz: _gd.rotZ, ry: _gd.rotY});
-      _thSprite.style.opacity = '0.3';
-      _thSprite.style.pointerEvents = 'none';
-      if(_thSprite._shadow) _thSprite._shadow.style.opacity = '0.1';
-      sprLayer.appendChild(_thSprite);
-      if(_thSprite._shadow){
-        const _shL = document.getElementById('shadowLayer');
-        if(_shL) _shL.appendChild(_thSprite._shadow);
-      }
-      _moonGhostSprites.push(_thSprite);
-    }
-  }
-}
-
-function removeMoonGhostDominos(){
-  for(const s of _moonGhostSprites){
-    if(s._shadow) s._shadow.remove();
-    s.remove();
-  }
-  _moonGhostSprites = [];
-}
-
-function refreshMoonGhosts(){
-  showMoonGhostDominos();
-}
 
 // ============================================================
 // v14.2.0: T42 AUTO LAYOUT (4 players, square table)
@@ -5778,264 +5491,6 @@ function animateWidowFlip(callback){
   });
 }
 
-function showMoonSettingsPanel(){
-  var existing = document.getElementById('moonSettingsPanel');
-  if(existing){ existing.remove(); return; }
-
-  // V12.10.2: Modal backdrop style matching TN51/T42 panels
-  var backdrop = document.createElement('div');
-  backdrop.id = 'moonSettingsPanel';
-  backdrop.className = 'modalBackdrop';
-  backdrop.style.cssText = 'display:flex;z-index:2000;';
-  backdrop.addEventListener('click', function(e){ if(e.target === backdrop) backdrop.remove(); });
-
-  var modalDiv = document.createElement('div');
-  modalDiv.className = 'modal';
-  modalDiv.style.cssText = 'width:360px;max-height:85vh;overflow-y:auto;';
-
-  var header = document.createElement('div');
-  header.className = 'modalHeader';
-  header.style.cssText = 'padding:12px 16px;';
-  var titleSpan = document.createElement('span');
-  titleSpan.style.cssText = 'font-weight:700;font-size:15px;';
-  titleSpan.textContent = 'Moon Layout Settings';
-  header.appendChild(titleSpan);
-  var closeX = document.createElement('button');
-  closeX.className = 'closeBtn';
-  closeX.innerHTML = '&times;';
-  closeX.onclick = function(){ backdrop.remove(); };
-  header.appendChild(closeX);
-  modalDiv.appendChild(header);
-
-  var panel = document.createElement('div');
-  panel.className = 'modalBody';
-  panel.style.cssText = 'padding:12px 16px;';
-  modalDiv.appendChild(panel);
-  backdrop.appendChild(modalDiv);
-
-  function addSlider(label, key, obj, min, max, step, onUpdate){
-    var val = obj[key];
-    var isRaw = (min < 0);
-    var group = document.createElement('div');
-    group.className = 't42s-group';
-    var lbl = document.createElement('label');
-    function fmtVal(v){
-      if(isRaw) return v.toFixed(1);
-      return (v*100).toFixed(1) + '%';
-    }
-    lbl.textContent = label;
-    group.appendChild(lbl);
-    var sl = document.createElement('input');
-    sl.type = 'range'; sl.min = String(min); sl.max = String(max); sl.step = String(step);
-    sl.value = String(isRaw ? val : val * 100);
-    sl.style.width = '220px';
-    sl.style.verticalAlign = 'middle';
-    var valSpan = document.createElement('span');
-    valSpan.textContent = (typeof val === 'number' ? fmtVal(val) : val);
-    sl.oninput = function(){
-      var v = parseFloat(this.value);
-      obj[key] = isRaw ? v : v / 100;
-      valSpan.textContent = (typeof obj[key] === 'number' ? fmtVal(obj[key]) : obj[key]);
-      if(onUpdate) onUpdate();
-    };
-    group.appendChild(sl);
-    group.appendChild(valSpan);
-    panel.appendChild(group);
-  }
-
-  function addSection(text){
-    var s = document.createElement('div');
-    s.className = 't42s-section';
-    s.textContent = text;
-    panel.appendChild(s);
-  }
-
-  var saveMoon = function(){
-    // V10_122e: Wrap localStorage in try-catch for iOS Safari private mode
-    try {
-      localStorage.setItem('tn51_moon_settings', JSON.stringify(MOON_SETTINGS));
-    } catch(e) {
-      console.warn('[iOS] localStorage write error:', e);
-    }
-    if(typeof positionPlayerIndicators === 'function') positionPlayerIndicators();
-    // Reposition all trick history sprites with updated settings
-    if(typeof repositionTrickHistorySprites === 'function') repositionTrickHistorySprites();
-    // Live-update swap popup position if visible
-    var swPopup = document.getElementById('widowSwapPopup');
-    if(swPopup && swPopup.style.display !== 'none'){
-      var swX = ((MOON_SETTINGS.widowSwapX || 0.50) * 100).toFixed(1);
-      var swY = ((MOON_SETTINGS.widowSwapY || 0.50) * 100).toFixed(1);
-      var swS = MOON_SETTINGS.widowSwapScale || 1.0;
-      swPopup.style.top = swY + '%';
-      swPopup.style.left = swX + '%';
-      swPopup.style.transform = 'translate(-50%,-50%) scale(' + swS + ')';
-    }
-    // Live-update bid popup position
-    var bidPanel = document.querySelector('#bidBackdrop .modalPanel');
-    if(bidPanel){
-      var bpX = ((MOON_SETTINGS.bidPopupX || 0.50) * 100).toFixed(1);
-      var bpY = ((MOON_SETTINGS.bidPopupY || 0.08) * 100).toFixed(1);
-      bidPanel.style.position = 'absolute';
-      bidPanel.style.left = bpX + 'vw';
-      bidPanel.style.top = bpY + 'vh';
-      bidPanel.style.transform = 'translateX(-50%)';
-    }
-  };
-  var saveWidow = function(){
-    // V10_122e: Wrap localStorage in try-catch for iOS Safari private mode
-    try {
-      localStorage.setItem('tn51_moon_widow_pos', JSON.stringify(MOON_WIDOW_POS));
-    } catch(e) {
-      console.warn('[iOS] localStorage write error:', e);
-    }
-    if(typeof updateWidowDisplay === 'function') updateWidowDisplay();
-  };
-
-  // Widow section
-  addSection('Widow');
-  addSlider('Widow X', 'xN', MOON_WIDOW_POS, 0, 100, 0.5, saveWidow);
-  addSlider('Widow Y', 'yN', MOON_WIDOW_POS, 0, 100, 0.5, saveWidow);
-  addSlider('Widow Scale', 'widowScale', MOON_SETTINGS, 0, 200, 1, function(){ saveMoon(); updateWidowDisplay(); });
-
-  // Widow orientation toggle
-  var orientDiv = document.createElement('div');
-  orientDiv.style.cssText = 'margin-bottom:8px;';
-  var orientLabel = document.createElement('label');
-  orientLabel.style.cssText = 'font-size:11px;color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;';
-  var orientChk = document.createElement('input');
-  orientChk.type = 'checkbox';
-  orientChk.checked = MOON_SETTINGS.widowHorizontal;
-  orientChk.style.cssText = 'accent-color:#eab308;';
-  orientChk.onchange = function(){
-    MOON_SETTINGS.widowHorizontal = this.checked;
-    saveMoon();
-    updateWidowDisplay();
-  };
-  orientLabel.appendChild(orientChk);
-  orientLabel.appendChild(document.createTextNode('Horizontal widow'));
-  orientDiv.appendChild(orientLabel);
-  panel.appendChild(orientDiv);
-
-  addSlider('Label Y Offset', 'widowLabelY', MOON_SETTINGS, -150, 50, 1, function(){ saveMoon(); updateWidowDisplay(); });
-
-  // Hands section
-  addSection('P1 Hand (You)');
-  var saveMoonLayout = function(){ saveMoon(); if(typeof applyMoonSettings === 'function') applyMoonSettings(); if(typeof refreshMoonGhosts === 'function') refreshMoonGhosts(); };
-  addSlider('P1 Scale', 'p1HandScale', MOON_SETTINGS, 0, 200, 0.5, saveMoonLayout);
-  addSlider('P1 X', 'p1HandX', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('P1 Y', 'p1HandY', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('P1 Spacing', 'p1HandSpacing', MOON_SETTINGS, 0, 30, 0.1, saveMoonLayout);
-
-  addSection('P2 Hand (Left)');
-  addSlider('P2 Scale', 'p2HandScale', MOON_SETTINGS, 0, 200, 0.5, saveMoonLayout);
-  addSlider('P2 X', 'p2HandX', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('P2 Y', 'p2HandY', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('P2 Spacing', 'p2HandSpacing', MOON_SETTINGS, 0, 30, 0.1, saveMoonLayout);
-
-  addSection('P3 Hand (Right)');
-  addSlider('P3 Scale', 'p3HandScale', MOON_SETTINGS, 0, 200, 0.5, saveMoonLayout);
-  addSlider('P3 X', 'p3HandX', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('P3 Y', 'p3HandY', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('P3 Spacing', 'p3HandSpacing', MOON_SETTINGS, 0, 30, 0.1, saveMoonLayout);
-
-  // Swap Popup section
-  addSection('Swap Popup');
-  addSlider('Popup X', 'widowSwapX', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('Popup Y', 'widowSwapY', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('Popup Scale', 'widowSwapScale', MOON_SETTINGS, 0, 200, 1, saveMoon);
-
-  // Bid Popup section
-  addSection('Bid Popup');
-  addSlider('Bid X', 'bidPopupX', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('Bid Y', 'bidPopupY', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-
-  // Indicators section
-  addSection('Indicators');
-  addSlider('P1 Ind X', 'ind1x', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('P1 Ind Y', 'ind1y', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('P2 Ind X', 'ind2x', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('P2 Ind Y', 'ind2y', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('P3 Ind X', 'ind3x', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-  addSlider('P3 Ind Y', 'ind3y', MOON_SETTINGS, 0, 100, 0.5, saveMoon);
-
-  // V10_107: Fix #13 — Current trick positions (played dominos + lead)
-  addSection('Current Trick Positions');
-  // Create a temp config object bound to PLACEHOLDER_CONFIG_MOON
-  var _pcm = PLACEHOLDER_CONFIG_MOON;
-  function _savePCM(){
-    try{ localStorage.setItem('tn51_moon_placeholders', JSON.stringify({
-      p1x: _pcm.players[1].xN, p1y: _pcm.players[1].yN,
-      p2x: _pcm.players[2].xN, p2y: _pcm.players[2].yN,
-      p3x: _pcm.players[3].xN, p3y: _pcm.players[3].yN,
-      leadX: _pcm.lead.xN, leadY: _pcm.lead.yN
-    })); }catch(e){}
-    createPlaceholders();
-  }
-  // P1 Played position
-  addSlider('P1 Played X', 'xN', _pcm.players[1], 0, 100, 0.5, _savePCM);
-  addSlider('P1 Played Y', 'yN', _pcm.players[1], 0, 100, 0.5, _savePCM);
-  // P2 Played position
-  addSlider('P2 Played X', 'xN', _pcm.players[2], 0, 100, 0.5, _savePCM);
-  addSlider('P2 Played Y', 'yN', _pcm.players[2], 0, 100, 0.5, _savePCM);
-  // P3 Played position
-  addSlider('P3 Played X', 'xN', _pcm.players[3], 0, 100, 0.5, _savePCM);
-  addSlider('P3 Played Y', 'yN', _pcm.players[3], 0, 100, 0.5, _savePCM);
-  // Lead domino position
-  addSlider('Lead X', 'xN', _pcm.lead, 0, 100, 0.5, _savePCM);
-  addSlider('Lead Y', 'yN', _pcm.lead, 0, 100, 0.5, _savePCM);
-  addSlider('Current Trick Scale', 'trickScale', MOON_SETTINGS, 0, 200, 0.5, saveMoonLayout);
-
-  // Trick history section
-  addSection('Trick History');
-  addSlider('TH Scale', 'thScale', MOON_SETTINGS, 0, 100, 0.5, saveMoonLayout);
-  addSlider('History X Offset', 'trickHistoryX', MOON_SETTINGS, -50, 50, 0.5, saveMoon);
-  addSlider('History Y Offset', 'trickHistoryY', MOON_SETTINGS, -50, 50, 0.5, saveMoon);
-  addSlider('Column Spacing', 'thColSpacing', MOON_SETTINGS, 0, 30, 0.1, saveMoonLayout);
-  addSlider('Row Spacing', 'thRowSpacing', MOON_SETTINGS, 0, 10, 0.1, saveMoonLayout);
-  addSlider('Group Padding', 'thBlockGap', MOON_SETTINGS, 0, 10, 0.1, saveMoonLayout);
-  addSlider('Start X', 'thBaseX', MOON_SETTINGS, 0, 50, 0.1, saveMoonLayout);
-
-  // Export + Preset + Close buttons (matching TN51/T42 style)
-  var btnRow1 = document.createElement('div');
-  btnRow1.style.cssText = 'text-align:center;margin-top:12px;';
-  var exportBtn = document.createElement('button');
-  exportBtn.className = 'glossBtn';
-  exportBtn.style.cssText = 'padding:6px 14px;font-size:12px;';
-  exportBtn.textContent = 'Export Values';
-  exportBtn.onclick = function(){
-    var dump = { moonSettings: MOON_SETTINGS, moonPlaceholders: PLACEHOLDER_CONFIG_MOON };
-    if(typeof MOON_WIDOW_POS !== 'undefined') dump.moonWidowPos = MOON_WIDOW_POS;
-    var ta = document.createElement('textarea');
-    ta.style.cssText = 'position:fixed;top:10%;left:10%;width:80%;height:70%;z-index:9999;font-size:11px;background:#111;color:#0f0;border:2px solid #0f0;padding:10px;border-radius:8px;';
-    ta.value = JSON.stringify(dump, null, 2);
-    document.body.appendChild(ta);
-    ta.select();
-    ta.addEventListener('click', function(){ ta.remove(); });
-  };
-  btnRow1.appendChild(exportBtn);
-  panel.appendChild(btnRow1);
-
-  var btnRow2 = document.createElement('div');
-  btnRow2.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-top:8px;';
-  var presetBtn = document.createElement('button');
-  presetBtn.style.cssText = 'padding:6px 14px;font-size:11px;font-weight:600;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:8px;color:#fff;cursor:pointer;';
-  presetBtn.textContent = '\u{1F4F1} Built-in Device Presets';
-  presetBtn.addEventListener('click', function(){ if(typeof window.showBuiltInPresetPicker==='function') window.showBuiltInPresetPicker(); });
-  btnRow2.appendChild(presetBtn);
-  panel.appendChild(btnRow2);
-
-  var btnRow3 = document.createElement('div');
-  btnRow3.style.cssText = 'text-align:center;margin-top:8px;';
-  var closeBtn = document.createElement('button');
-  closeBtn.className = 'glossBtn';
-  closeBtn.style.cssText = 'padding:6px 14px;font-size:12px;background:#ef4444;border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:600;';
-  closeBtn.textContent = 'Close';
-  closeBtn.onclick = function(){ backdrop.remove(); };
-  btnRow3.appendChild(closeBtn);
-  panel.appendChild(btnRow3);
-
-  document.body.appendChild(backdrop);
-}
 
 function afterWidowSwap(){
   // Refresh display after widow swap — now trigger trump selection
@@ -6261,6 +5716,20 @@ function drawFace(ctx, tile, w, h, highlighted = false, valid = true, rotRad){
   roundRectPath(ctx, 0, 0, w, h, rCss);
   ctx.fill();
 
+  // v14.6.0: optional wood grain (Dominoes picker "Wood" face)
+  if (DOMINO_STYLE.FACE_GRAIN) {
+    ctx.save();
+    roundRectPath(ctx, 0, 0, w, h, rCss); ctx.clip();
+    ctx.strokeStyle = "rgba(60,30,10,0.13)"; ctx.lineWidth = Math.max(1, w * 0.012);
+    for (let i = 0; i < 9; i++) {
+      const x0 = w * (i + 0.5) / 9;
+      ctx.beginPath(); ctx.moveTo(x0, 0);
+      ctx.bezierCurveTo(x0 + w*0.05, h*0.3, x0 - w*0.05, h*0.7, x0 + w*0.02, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // Bevel highlight (inner white stroke for 3D effect)
   ctx.save();
   ctx.globalAlpha = DOMINO_STYLE.BEVEL_OPACITY;
@@ -6452,6 +5921,9 @@ function drawFace(ctx, tile, w, h, highlighted = false, valid = true, rotRad){
     const cy = oy + hh / 2;
     const col = pipColorForValue(val);
     const useFancy = DOMINO_STYLE.PIPFX_ENABLED;
+    // v14.6.0: optional glow around the dots (Dominoes picker "Neon")
+    if (DOMINO_STYLE.PIP_GLOW) { ctx.shadowColor = col; ctx.shadowBlur = pr * 1.6; }
+    else { ctx.shadowBlur = 0; }
     for(const s of (spots[val] || [])){
       if (useFancy) {
         pipFancy(cx + s[0] * sx, cy + s[1] * sy, pr, col);
@@ -11758,13 +11230,8 @@ document.getElementById('notesTextarea').addEventListener('input', () => {
 });
 
 // ============================================================
-// Stubs for dev-tools.js (lazy-loaded)
+// Stubs for the game-log functions in dev-tools.js
 // ============================================================
-// Dev tools stubs — lazy loaded from dev-tools.js
-function showCustomHandDialog() { _lazyLoad("./assets/js/dev-tools.js", function(){ showCustomHandDialog(); }); }
-function closeCustomHandDialog() { /* no-op */ }
-function parseCustomHandText(t) { return null; }
-function startCustomHand() { _lazyLoad("./assets/js/dev-tools.js", function(){ startCustomHand(); }); }
 // Game logging stubs — no-op until dev-tools loaded
 var _gameLog = []; var _advLog = [];
 var handNumber = 0; var trickNumber = 0; var currentTrickPlays = [];
@@ -11781,8 +11248,6 @@ function formatGameLog() { return ""; }
 function formatAdvancedLog() { return ""; }
 function refreshGameLogContent() {}
 function refreshAdvLogContent() {}
-// Device presets stub
-var BUILTIN_DEVICE_PRESETS = {};
 
 // ─── Menu item click handlers that need dev-tools.js ───
 // These lazy-load dev-tools.js first, then open the panel.

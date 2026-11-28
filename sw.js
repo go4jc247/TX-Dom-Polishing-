@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.5.6 — Original muted tag colours and darker score boxes
+// Version: v14.6.0 — Developer mode removed; new Dominoes picker
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.5.6';
+const CACHE_NAME = 'tx-dom-v14.6.0';
 const urlsToCache = [
   './index.html',
   './sw.js',
@@ -17,6 +17,7 @@ const urlsToCache = [
   './assets/js/ai-engine.js',
   './assets/js/mp-social.js',
   './assets/js/orientation.js',
+  './assets/js/domino-picker.js',
   './assets/js/popup-config.js',
   // JS — lazy-loaded modules (pre-cached for offline)
   './assets/js/monte-carlo.js',

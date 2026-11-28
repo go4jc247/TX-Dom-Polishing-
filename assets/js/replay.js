@@ -527,10 +527,6 @@ function showReplayDialog(){
   html += ' <button onclick="saveCurrentHand()" style="padding:6px 12px;border-radius:6px;border:none;background:#22c55e;color:#fff;cursor:pointer;font-size:13px;">Save</button>';
   html += '</div>';
 
-  // Custom hand button
-  html += '<div style="margin-bottom:12px;">';
-  html += '<button onclick="showCustomHandDialog()" style="padding:8px 16px;border-radius:6px;border:none;background:#a855f7;color:#fff;cursor:pointer;font-size:13px;width:100%;">\u270F\uFE0F Custom Hand (Paste Deal)</button>';
-  html += '</div>';
 
   if(saved.length === 0){
     html += '<div style="opacity:0.5;font-size:13px;">No saved hands yet. Play a hand first, then save it here.</div>';
