@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.6.1 — Domino picker preview stays fixed at the top
+// Version: v14.6.2 — Dot colours: All the same, Mix and match, All different
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.6.1';
+const CACHE_NAME = 'tx-dom-v14.6.2';
 const urlsToCache = [
   './index.html',
   './sw.js',

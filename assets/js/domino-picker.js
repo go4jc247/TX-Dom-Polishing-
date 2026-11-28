@@ -34,6 +34,17 @@
   var SWATCHES = ['#141416','#f4f1ea','#5b3a1e','#d62828','#ff7a1a','#e8b923','#2f9e44','#0ea5a4',
                   '#1d4ed8','#6d28d9','#c026d3','#9ca3af','#39ff88','#25e8ff','#ff4fd8','#c9a227'];
 
+  function same(a,b){ return String(a).toLowerCase()===String(b).toLowerCase(); }
+  // Give every number 1-7 its own colour: repeats get the next unused swatch
+  function makeUnique(each){
+    var used = [];
+    for(var n=1;n<=7;n++){
+      if(used.some(function(u){ return same(u, each[n]); })){
+        each[n] = SWATCHES.filter(function(c){ return !used.some(function(u){ return same(u,c); }) && !each.slice(n+1,8).some(function(u){ return same(u,c); }); })[0];
+      }
+      used.push(each[n]);
+    }
+  }
   function fill(c){ var a=[]; for(var i=0;i<8;i++) a.push(c); return a; }
   function load(){ try{ var r=localStorage.getItem(KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
   function save(look){ try{ localStorage.setItem(KEY, JSON.stringify(look)); }catch(e){} }
@@ -143,7 +154,8 @@
           '<div class="dpCustom">' +
             '<div class="dpLabel">Tile colour</div><div class="dpFaces"></div>' +
             '<div class="dpLabel">Dots</div>' +
-            '<div class="dpSeg"><button data-mode="one">One colour</button><button data-mode="each">Each number</button></div>' +
+            '<div class="dpSeg"><button data-mode="one">All the same</button><button data-mode="each">Mix &amp; match</button><button data-mode="unique">All different</button></div>' +
+            '<div class="dpSegHint"></div>' +
             '<div class="dpNums"></div>' +
             '<div class="dpSwatches"></div>' +
             '<button class="dpSurprise">&#127922; Surprise me</button>' +
@@ -185,7 +197,9 @@
         if(draft.custom.mode !== b.dataset.mode && b.dataset.mode==='one'){
           draft.custom.one = draft.custom.each[selNum] || draft.custom.one;
         }
-        draft.custom.mode = b.dataset.mode; draft.preset='custom'; render(true);
+        draft.custom.mode = b.dataset.mode;
+        if(b.dataset.mode==='unique') makeUnique(draft.custom.each);
+        draft.preset='custom'; render(true);
       };
     });
 
@@ -205,8 +219,15 @@
       var b = el('button','dpSwatch'); b.dataset.c = c; b.style.background = c;
       b.setAttribute('aria-label','Colour '+c);
       b.onclick = function(){
-        if(draft.custom.mode==='one') draft.custom.one = c;
-        else { draft.custom.each[selNum] = c; if(selNum<7) selNum++; }
+        var cu = draft.custom;
+        if(cu.mode==='one') cu.one = c;
+        else {
+          if(cu.mode==='unique'){
+            // A colour can belong to only one number: if another number has it, they swap
+            for(var k=1;k<=7;k++){ if(k!==selNum && same(cu.each[k], c)){ cu.each[k] = cu.each[selNum]; } }
+          }
+          cu.each[selNum] = c; if(selNum<7) selNum++;
+        }
         draft.preset='custom'; render(true);
       };
       sw.appendChild(b);
@@ -217,8 +238,10 @@
       var face = keys[Math.floor(Math.random()*keys.length)];
       var dark = FACES[face].line==='light';
       var pool = SWATCHES.filter(function(c){ return dark ? c!=='#141416' && c!=='#5b3a1e' : c!=='#f4f1ea'; });
-      draft.custom.face = face; draft.custom.mode = 'each';
-      for(var i=1;i<=7;i++) draft.custom.each[i] = pool[Math.floor(Math.random()*pool.length)];
+      draft.custom.face = face;
+      if(draft.custom.mode==='one') draft.custom.mode = 'unique';
+      var bag = pool.slice().sort(function(){ return Math.random()-0.5; });
+      for(var i=1;i<=7;i++) draft.custom.each[i] = draft.custom.mode==='unique' ? bag[i-1] : pool[Math.floor(Math.random()*pool.length)];
       draft.preset='custom'; render(true);
     };
   }
@@ -253,7 +276,11 @@
     root.querySelectorAll('.dpFace').forEach(function(b){ b.classList.toggle('on', b.dataset.face===cu.face); });
     root.querySelectorAll('.dpSeg button').forEach(function(b){ b.classList.toggle('on', b.dataset.mode===cu.mode); });
     var nums = root.querySelector('.dpNums');
-    nums.style.display = cu.mode==='each' ? '' : 'none';
+    nums.style.display = cu.mode==='one' ? 'none' : '';
+    root.querySelector('.dpSegHint').textContent =
+      cu.mode==='one' ? 'Every dot is the same colour.' :
+      cu.mode==='each' ? 'Pick a colour for each number. Colours can repeat.' :
+      'Every number gets its own colour. No two are alike.';
     withLook({ preset:'custom', custom:cu }, function(){
       nums.querySelectorAll('.dpNum').forEach(function(b){
         var n = +b.dataset.n;
@@ -262,7 +289,14 @@
       });
     });
     var active = cu.mode==='one' ? cu.one : cu.each[selNum];
-    root.querySelectorAll('.dpSwatch').forEach(function(b){ b.classList.toggle('on', b.dataset.c.toLowerCase()===String(active).toLowerCase()); });
+    root.querySelectorAll('.dpSwatch').forEach(function(b){
+      b.classList.toggle('on', same(b.dataset.c, active));
+      // All different: show which number already owns each colour
+      var owner = 0;
+      if(cu.mode==='unique') for(var k=1;k<=7;k++) if(k!==selNum && same(cu.each[k], b.dataset.c)) owner = k;
+      b.textContent = owner ? owner : '';
+      b.classList.toggle('taken', !!owner);
+    });
   }
 
   function open(){
