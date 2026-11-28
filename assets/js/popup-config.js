@@ -62,11 +62,103 @@
   }
 
   // Apply config to a specific popup
+  // ─── v14.8.0: in-play windows (bid, trump, Nello, rule choices) ───
+  // Owner: the old windows were big, bulky slabs (95% of the screen wide, fixed shapes). These now
+  // size themselves: about 300pt wide on a phone (scaled up on tablets, never wider than the open
+  // table), as tall as their content, and they sit in the open middle of the table - upright
+  // between the score boxes and your hand, sideways inside the four player tags.
+  var GAME_CARDS = { bidBackdrop:1, trumpBackdrop:1, nelloBackdrop:1, nelloDoublesBackdrop:1, dfmChoiceBackdrop:1 };
+  function _cardRegion(backdrop){
+    var br = backdrop.getBoundingClientRect();
+    var W = br.width, H = br.height;
+    var reg = { left: 8, top: 8, right: W - 8, bottom: H - 8 };
+    try{
+      var land = document.body.classList.contains('landscapeLayout');
+      var tbl = (typeof getRect === 'function') ? getRect() : null;
+      var S = (typeof GAME_MODE !== 'undefined' && GAME_MODE === 'T42') ? T42_SETTINGS :
+              (typeof GAME_MODE !== 'undefined' && GAME_MODE === 'TN51') ? TN51_SETTINGS : null;
+      if(land){
+        var oc = (typeof _openCenterRect === 'function') ? _openCenterRect() : null;
+        if(oc && tbl){
+          // the open middle is short sideways, so the card may also cover the P3 and You tags
+          reg = { left: tbl.left - br.left + oc.left, top: Math.max(4, tbl.top - br.top + oc.top - 42),
+                  right: tbl.left - br.left + oc.left + oc.width,
+                  bottom: Math.min(H - 4, tbl.top - br.top + oc.top + oc.height + 42) };
+        } else {
+          var sp = parseFloat(getComputedStyle(document.body).getPropertyValue('--sidePanelW')) || W * 0.28;
+          reg = { left: 8, top: 8, right: W - sp - 8, bottom: H - 8 };
+        }
+      } else if(S && tbl){
+        var tb = document.getElementById('topbar');
+        var top = tb ? tb.getBoundingClientRect().bottom - br.top + 8 : H * 0.3;
+        var handTop = tbl.top - br.top + S.p1y * tbl.height - 56 * (S.p1Scale || 1) - 8;
+        if(handTop - top > 160) reg = { left: 8, top: top, right: W - 8, bottom: handTop };
+      }
+    }catch(e){}
+    return reg;
+  }
+  function layoutGameCard(backdrop){
+    var panel = backdrop.querySelector('.modalPanel');
+    if(!panel) return;
+    var minDim = Math.min(window.innerWidth, window.innerHeight);
+    var k = Math.max(0.9, Math.min(1.45, minDim / 390));
+    var reg = _cardRegion(backdrop);
+    var rw = reg.right - reg.left, rh = reg.bottom - reg.top;
+    // at least 270pt wide (on very narrow middles it may cover the side tags a little)
+    var cw = Math.min(Math.max(270, Math.min(300 * k, rw)), window.innerWidth - 16);
+    if(cw > rw){ var cx = (reg.left + reg.right) / 2; reg.left = cx - cw / 2; reg.right = cx + cw / 2; rw = cw; }
+    panel.classList.add('gameCard');
+    panel.style.setProperty('--k', k.toFixed(3));
+    backdrop.style.alignItems = ''; backdrop.style.paddingTop = '0';
+    function imp(k2, v){ panel.style.setProperty(k2, v, 'important'); }
+    imp('position', 'absolute');
+    imp('width', cw + 'px'); imp('max-width', 'none'); imp('min-width', '0');
+    imp('max-height', Math.max(120, rh) + 'px');
+    imp('aspect-ratio', 'auto'); imp('transform', 'none'); imp('margin', '0');
+    imp('left', (reg.left + (rw - cw) / 2) + 'px');
+    function place(){
+      // never cut anything off: if the content is taller than the space, shrink the card a little
+      var kk = k, guard = 0;
+      function tooTall(){
+        var bd = panel.querySelector('.modalBody');
+        return panel.scrollHeight > rh + 1 || (bd && bd.scrollHeight > bd.clientHeight + 1);
+      }
+      while(tooTall() && kk > 0.72 && guard++ < 12){
+        kk *= 0.94; panel.style.setProperty('--k', kk.toFixed(3));
+      }
+      var h = panel.offsetHeight;
+      imp('top', (reg.top + Math.max(0, (rh - h) / 2)) + 'px');
+    }
+    place(); requestAnimationFrame(place); setTimeout(place, 120);
+    _syncSliderFill();
+  }
+  // Slider tracks fill up to the thumb (--pct), for the bid and trump sliders
+  function _syncSliderFill(){
+    ['bidRangeSlider', 'trumpSlider'].forEach(function(id){
+      var el = document.getElementById(id); if(!el) return;
+      var mn = parseFloat(el.min) || 0, mx = parseFloat(el.max) || 1, v = parseFloat(el.value) || 0;
+      el.style.setProperty('--pct', (mx > mn ? (v - mn) / (mx - mn) * 100 : 0) + '%');
+    });
+  }
+  document.addEventListener('input', function(e){
+    if(e.target && (e.target.id === 'bidRangeSlider' || e.target.id === 'trumpSlider')) _syncSliderFill();
+  }, true);
+  setInterval(function(){                       // values also change from code (Pass / 2x / reopen)
+    var b = document.getElementById('bidBackdrop'), t = document.getElementById('trumpBackdrop');
+    if((b && b.style.display !== 'none') || (t && t.style.display !== 'none')) _syncSliderFill();
+  }, 300);
+  window.addEventListener('resize', function(){
+    setTimeout(function(){ for(var id in GAME_CARDS){ var el = document.getElementById(id);
+      if(el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none') layoutGameCard(el); } }, 450);
+  });
+
   function applyPopupConfig(popupId){
     var cfg = POPUP_CONFIG[popupId];
     if(!cfg) return;
     var backdrop = document.getElementById(popupId);
     if(!backdrop) return;
+    // v14.8.0: the in-play windows size and place themselves from the screen
+    if(GAME_CARDS[popupId]){ layoutGameCard(backdrop); return; }
 
     var panel = backdrop.querySelector('.modalPanel') || backdrop.querySelector('.modal') || backdrop.querySelector(':scope > div');
 

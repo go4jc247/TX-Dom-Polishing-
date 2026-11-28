@@ -2258,3 +2258,58 @@ body.stackTop #boneyard2Toggle.active .by2Arrow{ transform:rotate(90deg); }
 body.stackTop .settingsBtn .menuBtnLabel{ display:inline !important; font-size:13px; font-weight:800; letter-spacing:0.5px; }
 body.stackTop .settingsBtn{ gap:6px; padding:0 12px !important; width:auto !important; height:40px !important; min-height:40px !important; box-sizing:border-box; border-radius:10px !important; }
 body.stackTop .settingsMenu{ top:calc(48px + var(--insT, 0px)) !important; }
+
+/* ==================== v14.8.0: in-play windows (bid, trump, Nello, rule choices) ====================
+   Compact cards in the open middle of the table, in the muted look the owner prefers. Sizes scale
+   with --k (set from the screen in popup-config.js). Size/position come from layoutGameCard(). */
+.modalPanel.gameCard{
+  background:rgba(13,34,22,0.94) !important; border:1px solid rgba(255,255,255,0.13) !important;
+  border-radius:calc(18px * var(--k, 1)) !important; box-shadow:0 14px 36px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.25) !important;
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  color:#eef3ee; font-size:calc(14px * var(--k, 1)); display:flex; flex-direction:column; overflow:hidden;
+  animation:gcIn .18s ease-out;
+}
+@keyframes gcIn{ from{ opacity:0; transform:translateY(8px) scale(.98); } to{ opacity:1; transform:none; } }
+.gameCard .modalHeader{ border:none !important; justify-content:center !important; text-align:center;
+  padding:calc(12px * var(--k,1)) 14px 0 !important; background:none !important; min-height:0 !important; }
+.gameCard .modalHeader, .gameCard .modalHeader span{ font-size:calc(11.5px * var(--k,1)) !important; font-weight:800 !important;
+  letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,0.6) !important; }
+.gameCard .modalBody{ padding:calc(4px * var(--k,1)) calc(16px * var(--k,1)) calc(10px * var(--k,1)) !important; overflow-y:auto; min-height:0; }
+.gameCard .modalFooter{ border:none !important; padding:0 calc(14px * var(--k,1)) calc(14px * var(--k,1)) !important; gap:calc(8px * var(--k,1)) !important; flex-wrap:nowrap !important; }
+.gameCard .glossBtn{ flex:1 1 0; min-width:0 !important; padding:calc(11px * var(--k,1)) 8px !important; border-radius:calc(12px * var(--k,1)) !important;
+  font-size:calc(15px * var(--k,1)) !important; font-weight:800 !important; border:none !important;
+  box-shadow:0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18) !important; color:#fff !important; text-shadow:none !important; }
+.gameCard .glossGreen, .gameCard #btnNelloRegular, .gameCard #btnDfmYes{ background:linear-gradient(to bottom, #3d9a60, #2c7a4a) !important; }
+.gameCard .glossGray{ background:rgba(255,255,255,0.12) !important; }
+.gameCard #btnNello, .gameCard #btnNelloDoublesOnly{ background:linear-gradient(to bottom, #7a5aa8, #5f4389) !important; }
+.gameCard #btnDfmNo{ background:linear-gradient(to bottom, #a25a48, #834636) !important; }
+.gameCard .glossBtn:disabled{ opacity:0.45; }
+/* bid */
+.gameCard .bidCurrentValue{ font-size:calc(40px * var(--k,1)) !important; margin:calc(2px * var(--k,1)) 0 0 !important; line-height:1.05; text-shadow:none !important; }
+.gameCard #bidHintDisplay{ font-size:calc(11.5px * var(--k,1)) !important; min-height:calc(14px * var(--k,1)) !important; margin-top:2px !important; color:rgba(255,255,255,0.55) !important; }
+.gameCard .bidSliderWrap{ margin:calc(6px * var(--k,1)) 0 0 !important; padding:0 !important; }
+.gameCard .bidSliderContainer{ margin:calc(6px * var(--k,1)) 0 0 !important; gap:calc(8px * var(--k,1)) !important; }
+.gameCard .bidEndNotch, .gameCard .trumpSpecialBtn{ padding:calc(7px * var(--k,1)) calc(10px * var(--k,1)) !important; border-radius:999px !important;
+  font-size:calc(12.5px * var(--k,1)) !important; background:rgba(255,255,255,0.1) !important; border:1px solid rgba(255,255,255,0.14); color:#e9efe9; }
+.gameCard .bidEndNotch.active, .gameCard .trumpSpecialBtn.selected{ background:#3d9a60 !important; color:#fff !important; border-color:transparent; }
+.gameCard .bidRangeLabels, .gameCard .trumpSliderLabels{ font-size:calc(11px * var(--k,1)) !important; opacity:0.55 !important; margin-top:calc(6px * var(--k,1)) !important; }
+/* sliders: thick track that fills to the thumb, big easy thumb */
+.gameCard .bidRangeSlider, .gameCard .trumpSlider{
+  height:calc(10px * var(--k,1)) !important; border-radius:999px !important; margin:calc(8px * var(--k,1)) 0 !important;
+  background:linear-gradient(to right, #3d9a60 0, #3d9a60 var(--pct, 0%), rgba(255,255,255,0.16) var(--pct, 0%), rgba(255,255,255,0.16) 100%) !important;
+}
+.gameCard .bidRangeSlider::-webkit-slider-thumb, .gameCard .trumpSlider::-webkit-slider-thumb{
+  width:calc(30px * var(--k,1)) !important; height:calc(30px * var(--k,1)) !important; background:#f4f1ea !important;
+  border:calc(3px * var(--k,1)) solid #3d9a60; box-shadow:0 2px 8px rgba(0,0,0,0.45) !important; }
+.gameCard .bidRangeSlider::-moz-range-thumb, .gameCard .trumpSlider::-moz-range-thumb{
+  width:calc(26px * var(--k,1)) !important; height:calc(26px * var(--k,1)) !important; background:#f4f1ea !important; border:3px solid #3d9a60 !important; }
+/* trump */
+.gameCard .trumpCentralDisplay{ margin:calc(4px * var(--k,1)) 0 calc(4px * var(--k,1)) !important; }
+.gameCard .trumpCentralDisplay canvas{ width:calc(52px * var(--k,1)) !important; height:calc(52px * var(--k,1)) !important; border-radius:calc(10px * var(--k,1)) !important; }
+.gameCard .trumpCentralLabel{ font-size:calc(13px * var(--k,1)) !important; margin-top:calc(6px * var(--k,1)) !important; }
+.gameCard .trumpSliderWrap{ margin:calc(4px * var(--k,1)) 4px calc(8px * var(--k,1)) !important; }
+.gameCard .trumpSpecialOptions{ gap:calc(6px * var(--k,1)) !important; margin-top:calc(4px * var(--k,1)) !important; }
+.gameCard #trumpHintBar{ background:none !important; border:none !important; padding:calc(4px * var(--k,1)) 12px 0 !important; }
+/* Nello / rule choices */
+.gameCard p{ margin:0 0 calc(10px * var(--k,1)) !important; font-size:calc(12.5px * var(--k,1)) !important; line-height:1.4; }
+.gameCard .modalBody > div[style*="flex-direction:column"]{ gap:calc(8px * var(--k,1)) !important; }

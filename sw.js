@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.7.7 — Menu button top left, BONES button top right (upright)
+// Version: v14.8.0 — Bid, trump and Nello windows redesigned
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.7.7';
+const CACHE_NAME = 'tx-dom-v14.8.0';
 const urlsToCache = [
   './index.html',
   './sw.js',

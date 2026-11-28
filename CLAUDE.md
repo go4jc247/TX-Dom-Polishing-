@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.7.7 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.8.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -213,7 +213,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.7.7): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.8.0): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -355,6 +355,15 @@ function _lazyLoad(src, cb) {
      .menuBtnLabel shown, width auto, 40px tall; menu panel opens on the left) and a "▼ BONES" button
      TOP RIGHT (#boneyard2Toggle restyled as a pill, position:fixed; opacity NOT !important so the
      game's inline fade still shows when BONES is off, e.g. after a lay-down). Sideways unchanged.
+   v14.8.0: IN-PLAY WINDOWS REDESIGNED (owner: big, bulky, out of proportion; wants a sizing algorithm and a
+     good slider). popup-config.js GAME_CARDS = bid, trump, nello, nelloDoubles, dfmChoice bypass the old
+     POPUP_DEFAULTS (95% wide) and use layoutGameCard(): width ~300pt x k (k = min(W,H)/390, 0.9..1.45),
+     min 270, placed in the open middle (upright: between score boxes and your hand; sideways: inside the
+     four tags, allowed to cover the P3/You tags); shrinks --k until nothing overflows. Sizes set with
+     'important' (older CSS forces widths). CSS .gameCard: muted dark-green card, small caps header,
+     compact pill buttons (muted green / purple / brick), thick slider track filled to the thumb (--pct,
+     kept in sync by an input listener + 300ms poll), big 30pt thumb. Other pop-ups (settings, logs,
+     about...) still use the old system.
 
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
