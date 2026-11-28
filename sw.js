@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.6.0 — Developer mode removed; new Dominoes picker
+// Version: v14.6.1 — Domino picker preview stays fixed at the top
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.6.0';
+const CACHE_NAME = 'tx-dom-v14.6.1';
 const urlsToCache = [
   './index.html',
   './sw.js',

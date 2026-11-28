@@ -136,8 +136,9 @@
       '<div class="dpSheet" role="dialog" aria-label="Choose your dominoes">' +
         '<div class="dpHead"><div class="dpTitle">Your Dominoes</div>' +
         '<button class="dpClose" aria-label="Close">&times;</button></div>' +
+        '<div class="dpMain">' +
+        '<div class="dpStage"><div class="dpFan"></div><div class="dpStageName"></div></div>' +
         '<div class="dpBody">' +
-          '<div class="dpStage"><div class="dpFan"></div><div class="dpStageName"></div></div>' +
           '<div class="dpGrid"></div>' +
           '<div class="dpCustom">' +
             '<div class="dpLabel">Tile colour</div><div class="dpFaces"></div>' +
@@ -147,6 +148,7 @@
             '<div class="dpSwatches"></div>' +
             '<button class="dpSurprise">&#127922; Surprise me</button>' +
           '</div>' +
+        '</div>' +
         '</div>' +
         '<div class="dpFoot"><button class="dpCancel">Cancel</button><button class="dpDone">Use these</button></div>' +
       '</div>';

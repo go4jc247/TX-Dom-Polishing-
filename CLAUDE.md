@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.6.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.6.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -114,6 +114,11 @@ These are not suggestions. They are hard rules for this project.
 ---
 
 ## WORKFLOW PREFERENCE
+
+- **PREVIEWS ALWAYS STAY IN VIEW (owner's standing rule).** Any picker, editor or settings window
+  that has a preview (dominoes, layout, colours, sliders) keeps the preview FIXED at the top (or the
+  side when sideways); only the controls under it scroll. The owner must always see the effect of
+  what they are changing. Never put the preview inside the scrolling area.
 
 - **Bug fixes: Just do it.** Don't ask permission for fixes — fix it, commit, and report what changed. If it breaks, we roll back.
 - **Always commit before and after changes** so every version is recoverable via git history.
@@ -208,7 +213,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.6.0): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.6.1): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -285,6 +290,8 @@ function _lazyLoad(src, cb) {
      Saved as localStorage 'tn51_domino_look'; old 'tn51_pip_colors' migrates to Custom. Writes
      DOMINO_STYLE (FACE/BACK/EDGE/PIP_COLORS + new FACE_GRAIN, PIP_GLOW read by drawFace).
      window.openDominoPicker() - the owner will decide later where else it lives (settings menu).
+   v14.6.1: picker preview (.dpStage) fixed above the scrolling .dpBody (left column sideways).
+     Owner: textures (e.g. wood) could look more natural later - fine for now.
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.

@@ -2135,9 +2135,11 @@ body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
 .dpHead{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px 6px 20px; flex-shrink:0; }
 .dpTitle{ font-size:22px; font-weight:800; letter-spacing:.3px; }
 .dpClose{ width:36px; height:36px; border-radius:50%; border:none; background:rgba(255,255,255,0.1); font-size:24px; line-height:36px; padding:0; }
-.dpBody{ overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 16px 12px; flex:1; min-height:0; }
+.dpMain{ display:flex; flex-direction:column; flex:1; min-height:0; }
+/* v14.6.1: the preview stays fixed at the top; only the options under it scroll */
+.dpBody{ overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px 16px 12px; flex:1; min-height:0; }
 
-.dpStage{ position:relative; height:176px; border-radius:18px; margin-bottom:14px; overflow:hidden;
+.dpStage{ position:relative; flex-shrink:0; height:176px; border-radius:18px; margin:4px 16px 12px; overflow:hidden;
   background:radial-gradient(ellipse at 50% 40%,#2f7a45 0%,#1d5a31 55%,#123d21 100%); box-shadow:0 0 0 1px rgba(0,0,0,0.35) inset, 0 8px 20px rgba(0,0,0,0.35) inset; }
 .dpFan{ position:absolute; left:50%; top:22px; width:0; height:0; }
 .dpFan canvas{ position:absolute; left:-29px; top:0; border-radius:12px; box-shadow:0 6px 14px rgba(0,0,0,0.45); transform-origin:50% 130%; transition:transform .35s cubic-bezier(.2,.9,.3,1.3); }
@@ -2197,10 +2199,10 @@ body.landscapeLayout #topbar .tallyCanvas{ height:100% !important; }
 @media (orientation:landscape) and (max-height:600px){
   .dpSheet{ max-width:900px; }
   .dpHead{ padding:8px 14px 2px 18px; } .dpTitle{ font-size:19px; }
-  .dpBody{ display:grid; grid-template-columns:250px 1fr; gap:14px; align-items:start; }
-  .dpStage{ position:sticky; top:0; height:180px; margin:0; grid-row:1 / span 2; }
-  .dpFan{ top:14px; transform:scale(.8); transform-origin:50% 0; }
+  .dpMain{ flex-direction:row; }
+  .dpStage{ width:250px; height:auto; min-height:170px; margin:4px 0 12px 14px; }
+  .dpBody{ padding-left:14px; }
+  .dpFan{ top:calc(50% - 60px); transform:scale(.8); transform-origin:50% 0; }
   .dpGrid{ grid-template-columns:repeat(3,1fr); }
-  .dpCustom{ grid-column:2; margin-top:0; }
   .dpFoot{ padding:8px 14px 10px; } .dpFoot button{ padding:10px; }
 }
