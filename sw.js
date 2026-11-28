@@ -1,10 +1,10 @@
 // ============================================================
 // TX-Dom-Dev Service Worker
-// Version: v14.7.6 — Texas 42 history: 7 and a quarter across, 1px gaps
+// Version: v14.7.7 — Menu button top left, BONES button top right (upright)
 // UPDATE CACHE_NAME every release to bust old caches
 // ============================================================
 
-const CACHE_NAME = 'tx-dom-v14.7.6';
+const CACHE_NAME = 'tx-dom-v14.7.7';
 const urlsToCache = [
   './index.html',
   './sw.js',
