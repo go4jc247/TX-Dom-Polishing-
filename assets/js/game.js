@@ -3,7 +3,7 @@
 // Extracted from index.html v13.3.0
 // ============================================================
 
-const GAME_VERSION = 'v14.7.0'; // Update each release — used by splash & about screens
+const GAME_VERSION = 'v14.7.1'; // Update each release — used by splash & about screens
 
 // ============================================================
 // Lazy Load Helper — loads JS modules on demand
@@ -118,6 +118,8 @@ const DOMINO_STYLE = {
   CENTER_LINE_SH_WIDTH_RATIO: 0.32,
   CENTER_LINE_SH_Y_OFFSET_PX: 1.6,
 };
+// v14.7.1: the game's true built-in tile look, before any saved settings touch it (Dominoes picker 'Original')
+window._DOMINO_STYLE_DEFAULT = JSON.parse(JSON.stringify(DOMINO_STYLE));
 
 /******************************************************************************
  * ANIMATION SETTINGS - All timing values in milliseconds

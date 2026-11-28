@@ -10,25 +10,32 @@
 
   var CLASSIC_DOTS = ['#141416','#36b258','#f0c73d','#e74c3c','#00b2ff','#9b59b6','#a76e34','#3b82f6'];
 
-  // v14.6.5: "Original" = exactly how the dominoes looked before the picker existed. Taken from
-  // DOMINO_STYLE as the game set it up (built-in values + the old Domino Style panel's saved
-  // colours) plus the old Pip Colors panel's saved dots. Stored once so it never drifts.
+  // v14.7.1: "Original" = the game's TRUE built-in default look (owner: "look back to what the
+  // original default was"). It no longer picks up colours or dot effects saved in the old
+  // developer panels. window._DOMINO_STYLE_DEFAULT is copied in game.js before any saved setting
+  // is applied. The Game Settings switches (fancy centre line, dot shine) are left as the player set them.
+  var DEF = window._DOMINO_STYLE_DEFAULT || null;
+  var TOGGLES = { FANCY_LINE_ENABLED: 1, PIPFX_ENABLED: 1 };
+  // Everything else that shapes a tile, as loaded at startup (built-in + saved tweaks): the other
+  // styles keep using this, so visiting Original and coming back changes nothing for them
+  var BASE = (typeof DOMINO_STYLE !== 'undefined') ? JSON.parse(JSON.stringify(DOMINO_STYLE)) : null;
+  try{ localStorage.removeItem('tn51_domino_original'); }catch(e){}   // old v14.6.5 snapshot
+  function restoreFrom(src){
+    if(!src || typeof DOMINO_STYLE === 'undefined') return;
+    Object.keys(src).forEach(function(k){
+      if(TOGGLES[k]) return;
+      var v = src[k];
+      if(v && typeof v === 'object'){
+        if(Array.isArray(v)) for(var i=0;i<v.length;i++) DOMINO_STYLE[k][i] = v[i];
+        else Object.assign(DOMINO_STYLE[k], v);
+      } else DOMINO_STYLE[k] = v;
+    });
+  }
   var ORIGINAL = (function(){
-    try{ var o = JSON.parse(localStorage.getItem('tn51_domino_original') || 'null'); if(o && o.v === 1) return o; }catch(e){}
-    var D = (typeof DOMINO_STYLE !== 'undefined') ? DOMINO_STYLE : null;
-    var o = { v:1,
-      face: D ? D.FACE.NORMAL : 'rgba(245,236,221,0.96)', hi: D ? D.FACE.HIGHLIGHTED : 'rgba(255,255,255,1.0)',
-      back: D ? D.BACK.NORMAL : 'rgba(232,222,205,0.92)', backHi: D ? D.BACK.HIGHLIGHTED : 'rgba(245,240,230,0.95)',
-      edge: D ? D.EDGE.NORMAL : '#d7d7d7', edgeHi: D ? D.EDGE.HIGHLIGHTED : '#e8e8e8',
-      fancy: D ? D.FANCY_LINE_COLOR : 'rgba(0,0,0,0.90)', line: D ? D.CENTER_LINE_COLOR : 'rgba(0,0,0,0.22)',
-      bevel: D ? D.BEVEL_OPACITY : 0.40,
-      dots: D ? [0,1,2,3,4,5,6,7].map(function(i){ return D.PIP_COLORS[i]; }) : null };
-    try{
-      var pc = JSON.parse(localStorage.getItem('tn51_pip_colors') || 'null');
-      if(pc && o.dots) for(var k in pc){ var i = parseInt(k,10); if(i>=0 && i<=7) o.dots[i] = pc[k]; }
-    }catch(e){}
-    try{ localStorage.setItem('tn51_domino_original', JSON.stringify(o)); }catch(e){}
-    return o;
+    var D = DEF || {};
+    return { face: D.FACE ? D.FACE.NORMAL : 'rgba(245,236,221,0.96)', hi: D.FACE ? D.FACE.HIGHLIGHTED : '#fff',
+             back: D.BACK ? D.BACK.NORMAL : 'rgba(232,222,205,0.92)', edge: D.EDGE ? D.EDGE.NORMAL : '#d7d7d7',
+             dots: D.PIP_COLORS ? [0,1,2,3,4,5,6,7].map(function(i){ return D.PIP_COLORS[i]; }) : null };
   })();
 
   // Face colours offered in Custom (and used by the presets)
@@ -123,16 +130,12 @@
   function applyToStyle(look){
     if(typeof DOMINO_STYLE === 'undefined') return;
     var r = resolve(look), f = r.face, light = f.line==='light';
+    // start every style from the same footing (Original from the true default, the rest from
+    // what was loaded at startup), then lay the style's own colours on top
+    restoreFrom(f.original ? DEF : BASE);
     if(f.original){
-      // Put back every value exactly as it was, flat face with no texture
-      DOMINO_STYLE.FACE.NORMAL = ORIGINAL.face; DOMINO_STYLE.FACE.HIGHLIGHTED = ORIGINAL.hi;
-      DOMINO_STYLE.BACK.NORMAL = ORIGINAL.back; DOMINO_STYLE.BACK.HIGHLIGHTED = ORIGINAL.backHi;
-      DOMINO_STYLE.EDGE.NORMAL = ORIGINAL.edge; DOMINO_STYLE.EDGE.HIGHLIGHTED = ORIGINAL.edgeHi;
-      DOMINO_STYLE.FANCY_LINE_COLOR = ORIGINAL.fancy; DOMINO_STYLE.CENTER_LINE_COLOR = ORIGINAL.line;
-      DOMINO_STYLE.BEVEL_OPACITY = ORIGINAL.bevel;
       DOMINO_STYLE.FACE_GRAIN = false; DOMINO_STYLE.FACE_TEXTURE = null; DOMINO_STYLE.TEX_DIR = 'same';
       DOMINO_STYLE.PIP_GLOW = false;
-      for(var j=0;j<8;j++) DOMINO_STYLE.PIP_COLORS[j] = r.dots[j];
       return;
     }
     DOMINO_STYLE.FACE.NORMAL = f.face;
@@ -174,16 +177,20 @@
 
   // Draw a tile in a temporary look (for the preset cards) without touching the game
   function withLook(look, fn){
-    var keep = JSON.stringify({ F:DOMINO_STYLE.FACE, B:DOMINO_STYLE.BACK, E:DOMINO_STYLE.EDGE, P:DOMINO_STYLE.PIP_COLORS,
-      fl:DOMINO_STYLE.FANCY_LINE_COLOR, cl:DOMINO_STYLE.CENTER_LINE_COLOR, bo:DOMINO_STYLE.BEVEL_OPACITY,
-      g:DOMINO_STYLE.FACE_GRAIN, gl:DOMINO_STYLE.PIP_GLOW });
-    var keepTex = DOMINO_STYLE.FACE_TEXTURE, keepDir = DOMINO_STYLE.TEX_DIR;
+    // draw in another look, then put every setting back exactly as it was
+    var keepTex = DOMINO_STYLE.FACE_TEXTURE;
+    DOMINO_STYLE.FACE_TEXTURE = null;
+    var keep = JSON.parse(JSON.stringify(DOMINO_STYLE));
+    DOMINO_STYLE.FACE_TEXTURE = keepTex;
     applyToStyle(look); fn();
-    var k = JSON.parse(keep);
-    Object.assign(DOMINO_STYLE.FACE,k.F); Object.assign(DOMINO_STYLE.BACK,k.B); Object.assign(DOMINO_STYLE.EDGE,k.E);
-    Object.assign(DOMINO_STYLE.PIP_COLORS,k.P);
-    DOMINO_STYLE.FANCY_LINE_COLOR=k.fl; DOMINO_STYLE.CENTER_LINE_COLOR=k.cl; DOMINO_STYLE.BEVEL_OPACITY=k.bo;
-    DOMINO_STYLE.FACE_GRAIN=k.g; DOMINO_STYLE.PIP_GLOW=k.gl; DOMINO_STYLE.FACE_TEXTURE=keepTex; DOMINO_STYLE.TEX_DIR=keepDir;
+    Object.keys(keep).forEach(function(k){
+      var v = keep[k];
+      if(v && typeof v === 'object'){
+        if(Array.isArray(v)) for(var i=0;i<v.length;i++) DOMINO_STYLE[k][i] = v[i];
+        else Object.assign(DOMINO_STYLE[k], v);
+      } else DOMINO_STYLE[k] = v;
+    });
+    DOMINO_STYLE.FACE_TEXTURE = keepTex;
   }
 
   // ---------- state ----------

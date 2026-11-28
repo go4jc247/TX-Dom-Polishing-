@@ -81,7 +81,7 @@ These are not suggestions. They are hard rules for this project.
 
 - **Game:** Texas 42 / TN51 Dominoes — HTML5 web game (multi-file, modular)
 - **Base file:** Started from `Texas Dominoes V12.10.27c 2.html` (clean, no Easter egg)
-- **Current version:** v14.7.0 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
+- **Current version:** v14.7.1 (MP_VERSION in multiplayer.js, CACHE_NAME in sw.js, aboutVersion, GAME_VERSION in game.js)
 - **Repo / live URL now:** go4jc247/TX-Dom-Polishing- → https://go4jc247.github.io/TX-Dom-Polishing/ (Pages from main)
 - **Live URL:** https://go4jc247.github.io/TX-Dom-Dev/
 - **PWA:** Installable as standalone app (manifest.webmanifest - a real file since v14.4.8 - + sw.js)
@@ -213,7 +213,7 @@ function _lazyLoad(src, cb) {
 4b. Layout rebuild (proposed Nov 26, 2026). Measure the screen and calculate positions instead of
    reading hand-placed coordinate tables. Keep animateSprite: the engine only supplies target poses,
    so each domino stays one continuous sprite (hand -> played -> trick history).
-   STATUS (v14.7.0): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
+   STATUS (v14.7.1): stages 1, 2 (TN51), 3 (T42 only), 4 and 5 DONE, plus landscape (v14.3.0):
    no top bar, right side panel (scores restyled from #topbar + trick history one trick per row via
    thTranspose; v14.3.1: the upright grid turned 90 degrees, tiles stand upright rotZ 0), small
    Menu top-left. TN51 table is always a true hexagon built out from the centre (never stretched).
@@ -319,6 +319,13 @@ function _lazyLoad(src, cb) {
      the bottom-left status line; 568x320 falls back (tiny overlap). _openCenterRect handles T42 so
      round-end/lay-down boxes sit in the open middle sideways. Tested 375x667, 390x844, 430x932,
      820x1180 and their sideways sizes + 568x320. TN51 untouched; the two modes still share helpers.
+   v14.7.1: "Original" was wrong on the owner's phone - it copied colours/dot effects he had saved in the
+     old developer panels. Owner wants the TRUE built-in default. game.js now keeps
+     window._DOMINO_STYLE_DEFAULT (deep copy right after DOMINO_STYLE, before any saved setting).
+     Original restores every DOMINO_STYLE key from it except the Game Settings switches
+     (FANCY_LINE_ENABLED, PIPFX_ENABLED); other styles restore from BASE (as loaded at startup, incl.
+     saved tweaks). withLook() snapshots/restores all keys. Old 'tn51_domino_original' key is deleted.
+     Verified pixel-identical to v14.5.6 defaults even with old tweaks saved.
    Engines: computeTn51AutoLayout() / computeT42AutoLayout() in game.js, run at the top of
    applyTn51Settings / applyT42Settings. body.fluidLayout = full-screen wrapper. The old TN51/T42
    layout sliders are overridden by the engines.
